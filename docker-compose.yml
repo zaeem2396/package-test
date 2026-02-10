@@ -1,0 +1,86 @@
+services:
+  # Laravel Application (NATS Queue app)
+  app:
+    build:
+      context: ..
+      dockerfile: package-test/Dockerfile
+    container_name: package_test_app
+    restart: always
+    volumes:
+      - .:/var/www/html
+      # Mount laravel-nats package so path repo resolves inside container
+      - ../laravel-nats:/var/www/laravel-nats
+      - ../runtime-insight:/var/www/runtime-insight
+    ports:
+      - "2331:8000"
+    environment:
+      APP_URL: http://localhost:2331
+      NATS_HOST: nats
+      NATS_PORT: 4222
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+    networks:
+      - app-network
+    depends_on:
+      - mysql
+      - nats
+      - mailhog
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1  
+
+  # PHPMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: package_test_phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    ports:
+      - "8023:80"
+    restart: always
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+
+  # MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: package_test_mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: test
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+      MYSQL_ROOT_PASSWORD: root_test
+    ports:
+      - "3306:3306"
+    networks:
+      - app-network
+
+  # Mailhog
+  mailhog:
+    image: mailhog/mailhog
+    container_name: package_test_mailhog
+    ports:
+      - "1025:1025"    # SMTP server
+      - "8025:8025"    # Web UI
+    networks:
+      - app-network
+
+  # NATS (for laravel-nats package testing)
+  nats:
+    image: nats:2.10
+    container_name: package_test_nats
+    command: ["--jetstream", "-m", "8222"]
+    ports:
+      - "4222:4222"   # Client connections
+      - "8222:8222"   # HTTP monitoring
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
