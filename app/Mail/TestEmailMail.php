@@ -19,7 +19,7 @@ class TestEmailMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Test Email — NATS Tasks',
+            subject: 'Test Email - NATS Tasks',
             from: config('mail.from.address'),
             replyTo: [config('mail.from.address')],
         );

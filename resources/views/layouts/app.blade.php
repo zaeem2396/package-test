@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Tasks') — {{ config('app.name') }}</title>
+    <title>@yield('title', 'Tasks') - {{ config('app.name') }}</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
@@ -22,12 +22,14 @@
                         Tasks
                     </a>
                     <nav class="flex items-center gap-1 sm:gap-4">
+                        <a href="{{ route('chat.index') }}" class="px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('chat.*') ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700' }}">Chat</a>
                         <a href="{{ route('dashboard') }}" class="px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('dashboard') ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700' }}">Tasks</a>
                         <a href="{{ route('tasks.create') }}" class="px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('tasks.create') ? 'bg-slate-100 dark:bg-slate-700' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700' }}">New task</a>
                         <a href="{{ route('nats.publish') }}" class="px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('nats.publish') ? 'bg-slate-100 dark:bg-slate-700' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700' }}">Broadcast</a>
                         <a href="{{ route('email.delayed') }}" class="px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('email.delayed*') ? 'bg-slate-100 dark:bg-slate-700' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700' }}">Delayed email</a>
                         <a href="{{ route('nats.status') }}" class="px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('nats.status') ? 'bg-slate-100 dark:bg-slate-700' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700' }}">Status</a>
                         <a href="{{ route('logs') }}" class="px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('logs') ? 'bg-slate-100 dark:bg-slate-700' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700' }}">Logs</a>
+                        <a href="{{ route('nats-poc.index') }}" class="px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('nats-poc.*') ? 'bg-slate-100 dark:bg-slate-700' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700' }}">NATS PoC</a>
                         <a href="{{ route('insight-test.index') }}" class="px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('insight-test.*') ? 'bg-slate-100 dark:bg-slate-700' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700' }}">Insight test</a>
                     </nav>
                 </div>

@@ -135,11 +135,11 @@ So the worker is busy for the delay period; the email is sent after that. This i
 
 ## Scenarios tested in this repo
 
-- **Connection:** `Nats::connection()` and connect — OK  
-- **Publish:** `Nats::publish('test.subject', $payload)` — OK  
-- **Subscribe:** `Nats::subscribe()` + `Nats::process(1.0)` — OK  
-- **Queue dispatch:** `ProcessTestJob::dispatch()->onConnection('nats')` — OK (dispatch works; worker not fully exercised here due to DB/cache from host)  
-- **JetStream:** `Nats::jetstream()->isAvailable()` and `nats:stream:list` — OK when NATS is run with `--jetstream`
+- **Connection:** `Nats::connection()` and connect - OK  
+- **Publish:** `Nats::publish('test.subject', $payload)` - OK  
+- **Subscribe:** `Nats::subscribe()` + `Nats::process(1.0)` - OK  
+- **Queue dispatch:** `ProcessTestJob::dispatch()->onConnection('nats')` - OK (dispatch works; worker not fully exercised here due to DB/cache from host)  
+- **JetStream:** `Nats::jetstream()->isAvailable()` and `nats:stream:list` - OK when NATS is run with `--jetstream`
 
 ---
 

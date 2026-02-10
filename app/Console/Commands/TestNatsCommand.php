@@ -17,7 +17,7 @@ class TestNatsCommand extends Command
     {
         $scenario = $this->option('scenario');
 
-        $this->info('NATS package test — scenario: ' . $scenario);
+        $this->info('NATS package test - scenario: ' . $scenario);
 
         try {
             match ($scenario) {

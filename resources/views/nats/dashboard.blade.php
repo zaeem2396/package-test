@@ -42,8 +42,8 @@
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-200">Failed</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{{ $t->scheduled_for?->format('M j, H:i') ?? '—' }}</td>
-                            <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{{ $t->processed_at?->format('M j, H:i:s') ?? '—' }}</td>
+                            <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{{ $t->scheduled_for?->format('M j, H:i') ?? '-' }}</td>
+                            <td class="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">{{ $t->processed_at?->format('M j, H:i:s') ?? '-' }}</td>
                             <td class="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">{{ $t->created_at->format('M j, H:i') }}</td>
                         </tr>
                     @empty

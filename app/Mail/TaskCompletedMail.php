@@ -20,7 +20,7 @@ class TaskCompletedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Task #{$this->task->id} completed — NATS Tasks",
+            subject: "Task #{$this->task->id} completed - NATS Tasks",
             from: config('mail.from.address'),
         );
     }

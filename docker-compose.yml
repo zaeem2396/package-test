@@ -8,8 +8,7 @@ services:
     restart: always
     volumes:
       - .:/var/www/html
-      # Mount laravel-nats package so path repo resolves inside container
-      - ../laravel-nats:/var/www/laravel-nats
+      # Mount runtime-insight only if using path repo for Insight test
       - ../runtime-insight:/var/www/runtime-insight
     ports:
       - "2331:8000"
