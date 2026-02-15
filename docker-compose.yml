@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # Laravel Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: test
+    restart: always
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "2331:8000"
+    environment:
+      NATS_HOST: nats
+      NATS_PORT: 4222
+      QUEUE_CONNECTION: nats
+    networks:
+      - app-network
+    depends_on:
+      - mysql
+      - nats
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1  
+
+  # PHPMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: test_phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    ports:
+      - "8023:80"
+    restart: always
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+
+  # MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: test_storage
+    restart: always
+    environment:
+      MYSQL_DATABASE: test
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+      MYSQL_ROOT_PASSWORD: root_test
+    ports:
+      - "3306:3306"
+    networks:
+      - app-network
+
+  # NATS (JetStream for queue + delayed jobs)
+  nats:
+    image: nats:2.10
+    container_name: test_nats
+    command: ["--jetstream", "-m", "8222"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    networks:
+      - app-network
+
+  # Mailhog
+  mailhog:
+    image: mailhog/mailhog
+    container_name: test_mailhog
+    ports:
+      - "1025:1025"    # SMTP server
+      - "8025:8025"    # Web UI
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
