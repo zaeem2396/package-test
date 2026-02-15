@@ -58,6 +58,7 @@
     <div class="container">
         <nav>
             <a href="{{ url('/') }}">Home</a>
+            <a href="{{ route('orders.index') }}" class="{{ request()->routeIs('orders.*') ? 'active' : '' }}">Orders (PoC)</a>
             <a href="{{ route('nats.dashboard') }}" class="{{ request()->routeIs('nats.dashboard') ? 'active' : '' }}">NATS Dashboard</a>
             <a href="{{ route('nats.streams') }}">JetStream Streams</a>
             <a href="{{ route('nats.failed-jobs') }}">Failed Jobs</a>

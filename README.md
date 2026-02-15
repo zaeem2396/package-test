@@ -48,6 +48,20 @@ This project is a **full NATS integration** demo using the [zaeem2396/laravel-na
 3. `php artisan serve` then open [http://localhost:8000](http://localhost:8000).
 4. In another terminal: `php artisan queue:work nats`.
 
+### Event-Driven Order PoC (portfolio-ready)
+
+A **full-feature PoC** demonstrates publish/subscribe, wildcard subscriptions (`orders.*`), request/reply (`payments.validate`), Laravel Queue over NATS, multiple connections (default + analytics), JetStream, and event chaining. See **[ARCHITECTURE.md](ARCHITECTURE.md)** for the message flow diagram and code snippets.
+
+**Run the PoC:**
+
+1. Start stack and migrate: `docker compose up -d` then `docker compose exec app php artisan migrate --force`.
+2. Optional – create JetStream stream for order events: `docker compose exec app php artisan nats:setup-orders-stream`.
+3. In **three separate terminals** (or background processes), run:
+   - `docker compose exec app php artisan nats:payment-responder` (RPC responder)
+   - `docker compose exec app php artisan nats:orders-subscriber` (wildcard `orders.*` logger)
+   - `docker compose exec app php artisan queue:work nats` (NATS queue worker)
+4. Open **[Orders (PoC)](http://localhost:2331/orders/create)** and create an order. Flow: `orders.created` → `payments.validate` (reply) → job dispatched → job publishes `orders.shipped` and `metrics.orders` (analytics).
+
 ### App features (NATS Dashboard at /nats)
 
 | Feature | Description |

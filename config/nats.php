@@ -22,6 +22,14 @@ return [
             'password' => env('NATS_PASSWORD'),
             'token' => env('NATS_TOKEN'),
         ],
+        // Second connection for analytics/metrics (e.g. separate cluster in production)
+        'analytics' => [
+            'host' => env('NATS_ANALYTICS_HOST', $natsHost),
+            'port' => (int) env('NATS_ANALYTICS_PORT', $natsPort),
+            'user' => env('NATS_ANALYTICS_USER', env('NATS_USER')),
+            'password' => env('NATS_ANALYTICS_PASSWORD', env('NATS_PASSWORD')),
+            'token' => env('NATS_ANALYTICS_TOKEN', env('NATS_TOKEN')),
+        ],
     ],
 
     'jetstream' => [

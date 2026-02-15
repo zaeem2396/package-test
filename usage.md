@@ -11,10 +11,11 @@ This document describes how to set up, run, and use the NATS demo application.
 3. [Running with Docker](#running-with-docker)
 4. [Running without Docker](#running-without-docker)
 5. [Application URLs](#application-urls)
-6. [NATS Dashboard](#nats-dashboard)
-7. [Queue worker](#queue-worker)
-8. [Testing](#testing)
-9. [Troubleshooting](#troubleshooting)
+6. [Event-Driven Order PoC](#event-driven-order-poc)
+7. [NATS Dashboard](#nats-dashboard)
+8. [Queue worker](#queue-worker)
+9. [Testing](#testing)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -142,6 +143,25 @@ docker compose run -d --name nats_worker app php artisan queue:work nats --sleep
 | `/nats/activity` | Full **activity feed** (all events) |
 | `/nats/streams` | JetStream streams list |
 | `/nats/failed-jobs` | Failed queue jobs (from database) |
+| `/orders` | **Order PoC** – list orders |
+| `/orders/create` | Create order (triggers full NATS flow) |
+
+---
+
+## Event-Driven Order PoC
+
+A full-feature proof-of-concept demonstrates **publish/subscribe**, **wildcard subscriptions** (`orders.*`), **request/reply** (`payments.validate`), **Laravel Queue over NATS**, **multiple connections** (default + analytics), **JetStream**, and **event chaining**. See **[ARCHITECTURE.md](ARCHITECTURE.md)** for the message flow diagram and code snippets.
+
+**Run the PoC:**
+
+1. Start stack and migrate (see [Running with Docker](#running-with-docker)).
+2. Optional: create JetStream stream for order events:  
+   `docker compose exec app php artisan nats:setup-orders-stream`
+3. In **three separate terminals**, run:
+   - `docker compose exec app php artisan nats:payment-responder` — RPC responder for `payments.validate`
+   - `docker compose exec app php artisan nats:orders-subscriber` — wildcard `orders.*` logger
+   - `docker compose exec app php artisan queue:work nats` — NATS queue worker
+4. Open [Orders (PoC)](http://localhost:2331/orders/create), submit an order. Flow: `orders.created` → `payments.validate` (reply) → job dispatched → job publishes `orders.shipped` and `metrics.orders` (analytics).
 
 ---
 

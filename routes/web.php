@@ -1,11 +1,14 @@
 <?php
 
 use App\Http\Controllers\NatsController;
+use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::resource('orders', OrderController::class)->only(['index', 'create', 'store', 'show']);
 
 Route::prefix('nats')->name('nats.')->group(function () {
     Route::get('/', [NatsController::class, 'dashboard'])->name('dashboard');

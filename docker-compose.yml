@@ -25,6 +25,46 @@ services:
       - 8.8.8.8
       - 1.1.1.1  
 
+  # Payment RPC responder (must run for POST /orders to succeed)
+  payment-responder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: test_payment_responder
+    restart: always
+    volumes:
+      - .:/var/www/html
+    command: php artisan nats:payment-responder
+    environment:
+      NATS_HOST: nats
+      NATS_PORT: 4222
+    networks:
+      - app-network
+    depends_on:
+      - nats
+      - app
+
+  # NATS queue worker (processes FulfillOrderJob)
+  queue-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: test_queue_worker
+    restart: always
+    volumes:
+      - .:/var/www/html
+    command: php artisan queue:work nats --sleep=3
+    environment:
+      NATS_HOST: nats
+      NATS_PORT: 4222
+      QUEUE_CONNECTION: nats
+    networks:
+      - app-network
+    depends_on:
+      - nats
+      - app
+      - mysql
+
   # PHPMyAdmin
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
