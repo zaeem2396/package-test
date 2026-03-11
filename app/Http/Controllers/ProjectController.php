@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\ProjectUpdated;
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -37,9 +38,16 @@ class ProjectController extends Controller
             'description' => 'nullable|string',
         ]);
 
+        $ownerId = $request->user()?->id ?? User::query()->value('id');
+        if ($ownerId === null) {
+            return redirect()->back()
+                ->withInput($request->only('name', 'description'))
+                ->withErrors(['owner' => 'Cannot create a project: no authenticated user and no users in the system.']);
+        }
+
         $project = Project::create([
             ...$validated,
-            'owner_id' => $request->user()?->id ?? \App\Models\User::query()->value('id') ?? 1,
+            'owner_id' => $ownerId,
         ]);
 
         event(new ProjectUpdated($project));

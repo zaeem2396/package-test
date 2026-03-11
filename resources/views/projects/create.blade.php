@@ -4,6 +4,9 @@
 
 @section('content')
 <h1 class="text-2xl font-bold mb-4">New Project</h1>
+@error('owner')
+    <p class="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded">{{ $message }}</p>
+@enderror
 <form action="{{ route('projects.store') }}" method="POST" class="max-w-md space-y-4">
     @csrf
     <div>
