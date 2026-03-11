@@ -15,8 +15,10 @@ class ProjectSeeder extends Seeder
             return;
         }
 
-        Project::factory(25)->create([
-            'owner_id' => fn () => $users->random()->id,
-        ]);
+        for ($i = 0; $i < 25; $i++) {
+            Project::factory()->create([
+                'owner_id' => $users->random()->id,
+            ]);
+        }
     }
 }
