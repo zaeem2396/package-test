@@ -19,6 +19,11 @@ class ProjectController extends Controller
         return view('projects.index', compact('projects'));
     }
 
+    public function create(): View
+    {
+        return view('projects.create');
+    }
+
     public function show(Project $project): View
     {
         $project->load(['tasks.assignee', 'owner']);
@@ -34,7 +39,7 @@ class ProjectController extends Controller
 
         $project = Project::create([
             ...$validated,
-            'owner_id' => $request->user()?->id ?? 1,
+            'owner_id' => $request->user()?->id ?? \App\Models\User::query()->value('id') ?? 1,
         ]);
 
         event(new ProjectUpdated($project));

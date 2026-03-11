@@ -7,12 +7,22 @@ use App\Events\TaskCreated;
 use App\Jobs\ProcessTaskReminderJob;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class TaskController extends Controller
 {
+    public function create(Request $request): View
+    {
+        usleep(150_000);
+        $projects = Project::orderBy('name')->get(['id', 'name']);
+        $users = User::orderBy('name')->get(['id', 'name']);
+        $selectedProjectId = $request->get('project_id');
+        return view('tasks.create', compact('projects', 'users', 'selectedProjectId'));
+    }
+
     public function index(Request $request): View
     {
         usleep(300_000);
