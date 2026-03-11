@@ -4,7 +4,6 @@ namespace Database\Factories;
 
 use App\Models\Project;
 use App\Models\Task;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,7 +17,7 @@ class TaskFactory extends Factory
     {
         return [
             'project_id' => Project::factory(),
-            'assignee_id' => fake()->optional(0.6)->passthrough(User::factory()),
+            'assignee_id' => null,
             'title' => fake()->sentence(4),
             'description' => fake()->optional(0.5)->paragraph(),
             'status' => fake()->randomElement(['pending', 'pending', 'in_progress', 'completed']),

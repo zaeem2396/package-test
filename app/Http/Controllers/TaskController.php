@@ -49,7 +49,7 @@ class TaskController extends Controller
             'status' => 'pending',
         ]);
 
-        event(new TaskCreated($task));
+        event(new TaskCreated($task, $request->user()));
 
         ProcessTaskReminderJob::dispatch($task)->delay(now()->addMinutes(5));
 
