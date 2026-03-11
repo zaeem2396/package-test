@@ -1,43 +1,8 @@
 <?php
 
-// Resolve NATS host/port so Docker (NATS_HOST=nats) always wins; in Docker default to nats:4222
-$natsHost = getenv('NATS_HOST') ?: env('NATS_HOST');
-$natsPort = getenv('NATS_PORT') ?: env('NATS_PORT');
-if ($natsHost === null || $natsHost === '') {
-    $natsHost = file_exists('/.dockerenv') ? 'nats' : 'localhost';
-}
-if ($natsPort === null || $natsPort === '') {
-    $natsPort = 4222;
-}
-
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Default Queue Connection Name
-    |--------------------------------------------------------------------------
-    |
-    | Laravel's queue supports a variety of backends via a single, unified
-    | API, giving you convenient access to each backend using identical
-    | syntax for each. The default queue connection is defined below.
-    |
-    */
-
-    'default' => env('QUEUE_CONNECTION', 'database'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Queue Connections
-    |--------------------------------------------------------------------------
-    |
-    | Here you may configure the connection options for every queue backend
-    | used by your application. An example configuration is provided for
-    | each backend supported by Laravel. You're also free to add more.
-    |
-    | Drivers: "sync", "database", "beanstalkd", "sqs", "redis",
-    |          "deferred", "background", "failover", "null"
-    |
-    */
+    'default' => env('QUEUE_CONNECTION', 'sync'),
 
     'connections' => [
 
@@ -99,55 +64,12 @@ return [
             ],
         ],
 
-        'nats' => [
-            'driver' => 'nats',
-            'host' => $natsHost,
-            'port' => (int) $natsPort,
-            'user' => env('NATS_USER'),
-            'password' => env('NATS_PASSWORD'),
-            'token' => env('NATS_TOKEN'),
-            'queue' => env('NATS_QUEUE', 'default'),
-            'retry_after' => (int) env('NATS_QUEUE_RETRY_AFTER', 60),
-            'prefix' => env('NATS_QUEUE_PREFIX', 'laravel.queue.'),
-            'dead_letter_queue' => env('NATS_QUEUE_DLQ', 'failed'),
-            'delayed' => [
-                'enabled' => env('NATS_QUEUE_DELAYED_ENABLED', true),
-                'stream' => env('NATS_QUEUE_DELAYED_STREAM', 'laravel_delayed'),
-                'subject_prefix' => env('NATS_QUEUE_DELAYED_SUBJECT_PREFIX', 'laravel.delayed.'),
-                'consumer' => env('NATS_QUEUE_DELAYED_CONSUMER', 'laravel_delayed_worker'),
-            ],
-        ],
-
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Job Batching
-    |--------------------------------------------------------------------------
-    |
-    | The following options configure the database and table that store job
-    | batching information. These options can be updated to any database
-    | connection and table which has been defined by your application.
-    |
-    */
 
     'batching' => [
         'database' => env('DB_CONNECTION', 'sqlite'),
         'table' => 'job_batches',
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Failed Queue Jobs
-    |--------------------------------------------------------------------------
-    |
-    | These options configure the behavior of failed queue job logging so you
-    | can control how and where failed jobs are stored. Laravel ships with
-    | support for storing failed jobs in a simple file or in a database.
-    |
-    | Supported drivers: "database-uuids", "dynamodb", "file", "null"
-    |
-    */
 
     'failed' => [
         'driver' => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
