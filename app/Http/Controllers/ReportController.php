@@ -13,11 +13,11 @@ use Illuminate\View\View;
 class ReportController extends Controller
 {
     /**
-     * Intentionally slow analytics route: multiple heavy queries + sleep.
+     * Intentionally slow analytics route: multiple heavy queries + long sleep for demo.
      */
     public function analytics(Request $request): View
     {
-        usleep(1_200_000); // 1.2s
+        usleep(10_000_000); // 10s – as slow as possible for loading-state testing
 
         $projectStats = Project::query()
             ->select('id', 'name')
