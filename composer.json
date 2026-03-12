@@ -8,11 +8,17 @@
         "framework"
     ],
     "license": "MIT",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/zaeem2396/obeserva"
+        }
+    ],
     "require": {
         "php": "^8.2",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
-        "observa/datadog-laravel": "^1.0"
+        "observa/obeserva": "@dev"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

@@ -24,3 +24,7 @@ Route::prefix('reports')->name('reports.')->group(function () {
     Route::get('/analytics', [ReportController::class, 'analytics'])->name('analytics');
     Route::get('/export', [ReportController::class, 'export'])->name('export');
 });
+
+Route::get('/demo/error', function () {
+    throw new \RuntimeException('Intentional error for testing error handling and observability.');
+})->name('demo.error');
