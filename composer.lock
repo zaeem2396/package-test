@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5f9e547ac5cd82013733d2ae6492c5d4",
+    "content-hash": "7a7deac2793bdd22648d7db53d00ded0",
     "packages": [
         {
             "name": "brick/math",
@@ -200,7 +200,6 @@
             ],
             "description": "Conductor PHP SDK and Laravel integration (Orkes & Netflix Conductor)",
             "transport-options": {
-                "symlink": true,
                 "relative": true
             }
         },

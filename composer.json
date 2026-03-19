@@ -8,10 +8,7 @@
     "repositories": [
         {
             "type": "path",
-            "url": "../orkes-laravel",
-            "options": {
-                "symlink": true
-            }
+            "url": "../orkes-laravel"
         }
     ],
     "require": {

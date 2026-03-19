@@ -1,52 +1,161 @@
-version: '3.8'
+# Full stack: Laravel + MySQL + Conductor OSS (Redis + Elasticsearch + server) + workers.
+#
+# Run from this directory (package-test). Parent directory must contain sibling repo `orkes-laravel/`.
+#
+#   docker compose up -d --build
+#
+# URLs:
+#   Laravel PoC:      http://localhost:8000/conductor-poc
+#   Conductor UI/API: http://localhost:8090  (REST base: http://localhost:8090/api)
+#   phpMyAdmin:       http://localhost:8080
+
+x-laravel-image: &laravel-image package-test-laravel:latest
+x-laravel-build: &laravel-build
+  context: ..
+  dockerfile: package-test/Dockerfile
 
 services:
+  # --- Conductor OSS (hostnames rs + es match conductoross/conductor config-redis.properties)
+  rs:
+    image: redis:7-alpine
+    container_name: conductor_redis
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.11
+    container_name: conductor_elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -qE '\"status\"\\s*:\\s*\"(green|yellow)\"'"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+
+  conductor-server:
+    image: conductoross/conductor:3.22.2
+    container_name: conductor_server
+    restart: unless-stopped
+    environment:
+      - CONFIG_PROP=config-redis.properties
+      - JAVA_OPTS=-Xms256m -Xmx768m
+    ports:
+      - "8090:8080"
+    depends_on:
+      rs:
+        condition: service_healthy
+      es:
+        condition: service_healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
+
+  # --- Laravel (same image for app + workers)
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: *laravel-build
+    image: *laravel-image
     container_name: laravel_app
-    restart: always
-    volumes:
-      - .:/var/www/html
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
+      DB_CONNECTION: mysql
       DB_HOST: mysql
       DB_DATABASE: laravel
       DB_USERNAME: laravel
       DB_PASSWORD: secret
       QUEUE_CONNECTION: database
-    networks:
-      - app-network
-    depends_on:
-      - mysql
-
-  queue-worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: laravel_queue
-    restart: always
+      CONDUCTOR_SERVER: http://conductor-server:8080/api
+      CONDUCTOR_POLL_INTERVAL: "2"
+      SERVICE_ROLE: web
     volumes:
       - .:/var/www/html
-    command: php artisan queue:work database --sleep=3 --tries=3
+      - ../orkes-laravel:/var/orkes-laravel:ro
+    networks:
+      - app-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      conductor-server:
+        condition: service_healthy
+
+  queue-worker:
+    image: *laravel-image
+    build: *laravel-build
+    container_name: laravel_queue
+    restart: unless-stopped
+    command: ["php", "artisan", "queue:work", "database", "--sleep=3", "--tries=3"]
     environment:
+      DB_CONNECTION: mysql
       DB_HOST: mysql
       DB_DATABASE: laravel
       DB_USERNAME: laravel
       DB_PASSWORD: secret
       QUEUE_CONNECTION: database
+      CONDUCTOR_SERVER: http://conductor-server:8080/api
+      SERVICE_ROLE: worker
+    volumes:
+      - .:/var/www/html
+      - ../orkes-laravel:/var/orkes-laravel:ro
     networks:
       - app-network
     depends_on:
-      - mysql
-      - app
+      mysql:
+        condition: service_healthy
+      app:
+        condition: service_started
+
+  conductor-worker:
+    image: *laravel-image
+    build: *laravel-build
+    container_name: laravel_conductor_worker
+    restart: unless-stopped
+    command: ["php", "artisan", "conductor:work"]
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_DATABASE: laravel
+      DB_USERNAME: laravel
+      DB_PASSWORD: secret
+      QUEUE_CONNECTION: database
+      CONDUCTOR_SERVER: http://conductor-server:8080/api
+      CONDUCTOR_POLL_INTERVAL: "2"
+      SERVICE_ROLE: worker
+    volumes:
+      - .:/var/www/html
+      - ../orkes-laravel:/var/orkes-laravel:ro
+    networks:
+      - app-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      conductor-server:
+        condition: service_healthy
+      app:
+        condition: service_started
 
   mysql:
     image: mysql:8.0
     container_name: laravel_mysql
-    restart: always
+    restart: unless-stopped
     environment:
       MYSQL_DATABASE: laravel
       MYSQL_USER: laravel
@@ -54,8 +163,16 @@ services:
       MYSQL_ROOT_PASSWORD: root
     ports:
       - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -65,11 +182,15 @@ services:
       PMA_PORT: 3306
     ports:
       - "8080:80"
-    restart: always
+    restart: unless-stopped
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     networks:
       - app-network
+
+volumes:
+  mysql_data:
 
 networks:
   app-network:

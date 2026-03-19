@@ -11,6 +11,16 @@
 
 This branch adds **`conductor/orkes-laravel`** (path repo: `../orkes-laravel`) and a **real-time workflow dashboard** at **`/conductor-poc`**.
 
+### Docker (full stack)
+
+From **`package-test/`**, with **`../orkes-laravel`** present:
+
+```bash
+docker compose up -d --build
+```
+
+Then open **http://localhost:8000/conductor-poc** (Conductor UI: **http://localhost:8090**). See [CONDUCTOR_POC_TESTING.md](CONDUCTOR_POC_TESTING.md) §0.
+
 - **How to test:** [CONDUCTOR_POC_TESTING.md](CONDUCTOR_POC_TESTING.md)
 - **Package gaps / notes:** [docs/ORKEES_LARAVEL_PACKAGE_BUGS.md](docs/ORKEES_LARAVEL_PACKAGE_BUGS.md)
 

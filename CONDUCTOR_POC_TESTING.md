@@ -4,7 +4,52 @@ This branch (`feature/conductor-orkes-poc`) integrates **`conductor/orkes-larave
 
 ---
 
-## 0. Prerequisites
+## 0. Fully dockerized stack (recommended)
+
+The repo **`docker-compose.yml`** starts **everything**:
+
+| Service | Purpose |
+|---------|---------|
+| `rs`, `es`, `conductor-server` | Conductor OSS (Redis + Elasticsearch + API/UI) |
+| `mysql` | Laravel database |
+| `app` | Laravel (`php artisan serve` on **:8000**) |
+| `queue-worker` | `php artisan queue:work database` |
+| `conductor-worker` | `php artisan conductor:work` (SIMPLE task workers) |
+| `phpmyadmin` | DB UI on **:8080** |
+
+**Layout:** `docker compose` must be run from **`package-test/`**. The **parent directory** must contain the sibling clone **`orkes-laravel/`** (same layout as local Composer path `../orkes-laravel`).
+
+**Note:** The `Dockerfile` build copies `composer.json` / `composer.lock` into the image and rewrites the path repo URL to `/var/orkes-laravel` **only inside the image** so `composer install` succeeds. Your working tree on the host is unchanged.
+
+```bash
+cd package-test   # this repo
+docker compose up -d --build
+```
+
+**First boot** can take **2–4 minutes** (Elasticsearch + Conductor healthchecks).
+
+**URLs**
+
+| What | URL |
+|------|-----|
+| PoC dashboard | http://localhost:8000/conductor-poc |
+| Conductor UI / Swagger | http://localhost:8090 |
+| Conductor API base (inside Compose) | `http://conductor-server:8080/api` (set automatically on `app` / workers) |
+| phpMyAdmin | http://localhost:8080 |
+
+Laravel containers receive **`CONDUCTOR_SERVER=http://conductor-server:8080/api`** — no `.env` change required for Compose.
+
+**Useful commands**
+
+```bash
+docker compose logs -f app conductor-worker conductor-server
+docker compose exec app php artisan conductor:inspect
+docker compose down
+```
+
+---
+
+## 0b. Prerequisites (non-Docker)
 
 - PHP 8.2+, Composer 2.x
 - A running **Conductor OSS** or **Orkes Conductor** API (REST base URL ending in `/api`, e.g. `http://127.0.0.1:8080/api`)
@@ -38,13 +83,17 @@ Config file: `config/conductor.php` (includes **`task_handlers`** for the three 
 
 ---
 
-## 2. Run Conductor (choose one)
+## 2. Run Conductor (non-Docker / external)
 
-### A) Official Docker Compose (recommended)
+### A) This repo’s Compose (section 0)
 
-Clone [conductor-oss/conductor](https://github.com/conductor-oss/conductor) and from its `docker/` directory follow [Running Conductor Using Docker](https://conductor-oss.github.io/conductor/devguide/running/docker.html) (typically Redis + Elasticsearch + server). Map host port **8080** (or set `CONDUCTOR_SERVER` to match your port).
+Already includes Conductor — use that when possible.
 
-### B) Orkes Cloud / playground
+### B) Official Conductor OSS compose
+
+Clone [conductor-oss/conductor](https://github.com/conductor-oss/conductor) and follow [Running Conductor Using Docker](https://conductor-oss.github.io/conductor/devguide/running/docker.html). Point `CONDUCTOR_SERVER` at your mapped API port (e.g. `http://127.0.0.1:8090/api`).
+
+### C) Orkes Cloud / playground
 
 Use the API URL and token from your Orkes account; set `CONDUCTOR_SERVER` and `CONDUCTOR_TOKEN`.
 
