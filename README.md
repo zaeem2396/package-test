@@ -7,6 +7,15 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Conductor / Orkes Laravel PoC (`feature/conductor-orkes-poc`)
+
+This branch adds **`conductor/orkes-laravel`** (path repo: `../orkes-laravel`) and a **real-time workflow dashboard** at **`/conductor-poc`**.
+
+- **How to test:** [CONDUCTOR_POC_TESTING.md](CONDUCTOR_POC_TESTING.md)
+- **Package gaps / notes:** [docs/ORKEES_LARAVEL_PACKAGE_BUGS.md](docs/ORKEES_LARAVEL_PACKAGE_BUGS.md)
+
+---
+
 ## NATS Queue App
 
 This project is a **full NATS integration** demo using the [zaeem2396/laravel-nats](https://github.com/zaeem2396/laravel-nats) package from Packagist. It showcases publish, request/reply, NATS queue driver, delayed jobs (JetStream), Dead Letter Queue, and JetStream streams.
