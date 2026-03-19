@@ -9,11 +9,11 @@
 
 ## Conductor / Orkes Laravel PoC (`feature/conductor-orkes-poc`)
 
-This branch adds **`conductor/orkes-laravel`** (path repo: `../orkes-laravel`) and a **real-time workflow dashboard** at **`/conductor-poc`**.
+This branch adds **`conductor/orkes-laravel`** from **[GitHub](https://github.com/zaeem2396/orkes-laravel)** (Composer VCS, `dev-main`) and a **real-time workflow dashboard** at **`/conductor-poc`**.
 
 ### Docker (full stack)
 
-From **`package-test/`**, with **`../orkes-laravel`** present:
+From **`package-test/`**:
 
 ```bash
 docker compose up -d --build

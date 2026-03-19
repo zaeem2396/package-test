@@ -1,6 +1,6 @@
 # Conductor / Orkes Laravel — PoC testing guide
 
-This branch (`feature/conductor-orkes-poc`) integrates **`conductor/orkes-laravel`** from the sibling path repo `../orkes-laravel` and demonstrates **each major feature** via a **real-time polling dashboard** (`/conductor-poc`), Artisan commands, a **standalone PHP script**, and **PHPUnit** using `Conductor::fake()`.
+This branch (`feature/conductor-orkes-poc`) integrates **`conductor/orkes-laravel`** from **[github.com/zaeem2396/orkes-laravel](https://github.com/zaeem2396/orkes-laravel)** via Composer **VCS** (`dev-main`) and demonstrates **each major feature** via a **real-time polling dashboard** (`/conductor-poc`), Artisan commands, a **standalone PHP script**, and **PHPUnit** using `Conductor::fake()`.
 
 ---
 
@@ -17,9 +17,9 @@ The repo **`docker-compose.yml`** starts **everything**:
 | `conductor-worker` | `php artisan conductor:work` (SIMPLE task workers) |
 | `phpmyadmin` | DB UI on **:8080** |
 
-**Layout:** `docker compose` must be run from **`package-test/`**. The **parent directory** must contain the sibling clone **`orkes-laravel/`** (same layout as local Composer path `../orkes-laravel`).
+**Layout:** run from **`package-test/`** only. The image and `composer install` fetch **`conductor/orkes-laravel`** from GitHub (see `composer.json` → `repositories`).
 
-**Note:** The `Dockerfile` build copies `composer.json` / `composer.lock` into the image and rewrites the path repo URL to `/var/orkes-laravel` **only inside the image** so `composer install` succeeds. Your working tree on the host is unchanged.
+**Note:** Docker build needs **network access** to clone the VCS dependency (and Composer dist downloads). Ensure `git` is available in the image (included in the `Dockerfile`).
 
 ```bash
 cd package-test   # this repo

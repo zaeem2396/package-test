@@ -1,6 +1,6 @@
 # Full stack: Laravel + MySQL + Conductor OSS (Redis + Elasticsearch + server) + workers.
 #
-# Run from this directory (package-test). Parent directory must contain sibling repo `orkes-laravel/`.
+# Run from this directory (package-test). `conductor/orkes-laravel` is installed from GitHub (Composer VCS).
 #
 #   docker compose up -d --build
 #
@@ -11,8 +11,8 @@
 
 x-laravel-image: &laravel-image package-test-laravel:latest
 x-laravel-build: &laravel-build
-  context: ..
-  dockerfile: package-test/Dockerfile
+  context: .
+  dockerfile: Dockerfile
 
 services:
   # --- Conductor OSS (hostnames rs + es match conductoross/conductor config-redis.properties)
@@ -88,7 +88,6 @@ services:
       SERVICE_ROLE: web
     volumes:
       - .:/var/www/html
-      - ../orkes-laravel:/var/orkes-laravel:ro
     networks:
       - app-network
     depends_on:
@@ -114,7 +113,6 @@ services:
       SERVICE_ROLE: worker
     volumes:
       - .:/var/www/html
-      - ../orkes-laravel:/var/orkes-laravel:ro
     networks:
       - app-network
     depends_on:
@@ -141,7 +139,6 @@ services:
       SERVICE_ROLE: worker
     volumes:
       - .:/var/www/html
-      - ../orkes-laravel:/var/orkes-laravel:ro
     networks:
       - app-network
     depends_on:

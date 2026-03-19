@@ -7,13 +7,13 @@
     "license": "MIT",
     "repositories": [
         {
-            "type": "path",
-            "url": "../orkes-laravel"
+            "type": "vcs",
+            "url": "https://github.com/zaeem2396/orkes-laravel"
         }
     ],
     "require": {
         "php": "^8.2",
-        "conductor/orkes-laravel": "@dev",
+        "conductor/orkes-laravel": "dev-main",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1"
     },

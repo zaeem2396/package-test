@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7a7deac2793bdd22648d7db53d00ded0",
+    "content-hash": "00070d1fd59cb047cb8c9fb34ddb805a",
     "packages": [
         {
             "name": "brick/math",
@@ -138,10 +138,16 @@
         {
             "name": "conductor/orkes-laravel",
             "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "../orkes-laravel",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zaeem2396/orkes-laravel.git",
                 "reference": "ec05c3213c1cf127b5e9200bd1aef8547d090568"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zaeem2396/orkes-laravel/zipball/ec05c3213c1cf127b5e9200bd1aef8547d090568",
+                "reference": "ec05c3213c1cf127b5e9200bd1aef8547d090568",
+                "shasum": ""
             },
             "require": {
                 "guzzlehttp/guzzle": "^7.0",
@@ -156,6 +162,7 @@
                 "phpstan/phpstan": "^1.0",
                 "phpunit/phpunit": "^10.0|^11.0|^12.0"
             },
+            "default-branch": true,
             "type": "library",
             "extra": {
                 "laravel": {
@@ -199,9 +206,11 @@
                 "MIT"
             ],
             "description": "Conductor PHP SDK and Laravel integration (Orkes & Netflix Conductor)",
-            "transport-options": {
-                "relative": true
-            }
+            "support": {
+                "source": "https://github.com/zaeem2396/orkes-laravel/tree/main",
+                "issues": "https://github.com/zaeem2396/orkes-laravel/issues"
+            },
+            "time": "2026-03-18T18:59:14+00:00"
         },
         {
             "name": "dflydev/dot-access-data",
