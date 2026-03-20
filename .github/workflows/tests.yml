@@ -1,0 +1,30 @@
+# E-commerce PoC + Laravel — PHPUnit (SQLite in-memory; no Conductor required).
+name: Tests
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  phpunit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, json, tokenizer, pdo_sqlite
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Application key
+        run: php -r "file_exists('.env') || copy('.env.example', '.env');" && php artisan key:generate --no-interaction
+
+      - name: PHPUnit
+        run: php artisan test

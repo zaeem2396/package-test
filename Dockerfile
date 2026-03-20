@@ -31,4 +31,6 @@ RUN composer dump-autoload --optimize --no-scripts
 EXPOSE 8000
 
 ENTRYPOINT ["sh", "/var/www/html/docker/entrypoint.sh"]
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# --no-reload: Laravel otherwise spawns the PHP server with only a small env allowlist,
+# stripping Docker Compose vars like CONDUCTOR_SERVER (see ServeCommand::$passthroughVariables).
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000", "--no-reload"]

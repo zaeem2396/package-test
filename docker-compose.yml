@@ -1,13 +1,15 @@
-# Full stack: Laravel + MySQL + Conductor OSS (Redis + Elasticsearch + server) + workers.
+# Full stack: Laravel + MySQL + Conductor OSS (Postgres archive + Redis + ES7 + server) + workers.
 #
 # Run from this directory (package-test). `conductor/orkes-laravel` is installed from GitHub (Composer VCS).
 #
 #   docker compose up -d --build
 #
 # URLs:
-#   Laravel PoC:      http://localhost:8000/conductor-poc
+#   Laravel app:      http://localhost:8000  (orders UI: /orders)
 #   Conductor UI/API: http://localhost:8090  (REST base: http://localhost:8090/api)
 #   phpMyAdmin:       http://localhost:8080
+#
+# Conductor 3.15.x Docker image always runs Flyway against Postgres (workflow archive); Redis/ES remain primary store/index.
 
 x-laravel-image: &laravel-image package-test-laravel:latest
 x-laravel-build: &laravel-build
@@ -15,7 +17,26 @@ x-laravel-build: &laravel-build
   dockerfile: Dockerfile
 
 services:
-  # --- Conductor OSS (hostnames rs + es match conductoross/conductor config-redis.properties)
+  # --- Conductor OSS: Postgres (archive/Flyway) + Redis + ES7 (see docker/conductor/config.properties)
+  conductor-postgres:
+    image: postgres:15-alpine
+    container_name: conductor_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: conductor
+      POSTGRES_PASSWORD: conductor
+      POSTGRES_DB: conductor
+    volumes:
+      - conductor_postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U conductor -d conductor"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
   rs:
     image: redis:7-alpine
     container_name: conductor_redis
@@ -42,19 +63,22 @@ services:
       test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -qE '\"status\"\\s*:\\s*\"(green|yellow)\"'"]
       interval: 10s
       timeout: 10s
-      retries: 20
+      retries: 25
       start_period: 90s
 
   conductor-server:
-    image: conductoross/conductor:3.22.2
+    image: conductoross/conductor:3.15.0
     container_name: conductor_server
     restart: unless-stopped
     environment:
-      - CONFIG_PROP=config-redis.properties
-      - JAVA_OPTS=-Xms256m -Xmx768m
+      - JVM_MEMORY_SETTINGS=-Xms256m -Xmx768m
+    volumes:
+      - ./docker/conductor/config.properties:/app/config/config.properties:ro
     ports:
       - "8090:8080"
     depends_on:
+      conductor-postgres:
+        condition: service_healthy
       rs:
         condition: service_healthy
       es:
@@ -188,6 +212,7 @@ services:
 
 volumes:
   mysql_data:
+  conductor_postgres_data:
 
 networks:
   app-network:

@@ -1,22 +1,22 @@
-# `conductor/orkes-laravel` — issues / limitations found via package-test PoC
+# `conductor/orkes-laravel` — issues / limitations found via package-test
 
-These items are observations from integrating the package into **`package-test`** (`feature/conductor-orkes-poc`). They may be intentional design choices; treat as a backlog for the package maintainers.
+These items are observations from integrating the package into **`package-test`** (e-commerce Conductor demo). They may be intentional design choices; treat as a backlog for the package maintainers.
 
 ---
 
-## 1. Laravel `TaskHandler` always completes successfully in Artisan workers
+## Conductor semantics: workflow `input` vs SIMPLE task `inputData`
 
-**Location:** `WorkerCommand`, `LocalCommand`
+**Not a package bug.** Conductor does **not** automatically copy workflow start `input` into each SIMPLE task. If polled tasks show **`inputData: {}`**, add per-task **`inputParameters`** in the workflow JSON (e.g. `"order_id": "${workflow.input.order_id}"`). The DSL’s `->inputParameters([...])` on `Workflow::define()` is workflow-level documentation only until the package adds helpers to map inputs onto each `->task()`.
 
-Handlers registered via `TaskHandler::handle()` are wrapped so the inner worker always receives:
+---
 
-```php
-return ['status' => 'COMPLETED', 'outputData' => $output];
-```
+## 1. Laravel `TaskHandler` return shape (partially addressed)
 
-**Impact:** Implementations cannot return **`FAILED`** with `reasonForIncompletion` through the Laravel integration without throwing. Throwing eventually maps to `fail()` after retries (per `Worker` logic), which is not the same as an explicit structured failure.
+**Location:** `WorkerCommand`, `LocalCommand`, `TaskHandler` docblock
 
-**Suggestion:** Allow `TaskHandler::handle()` to return a shape that includes `status` + optional `reasonForIncompletion`, or add a dedicated interface for “result discriminated union”.
+Handlers may return **plain output** (wrapped as `COMPLETED`) **or** an explicit array including `status` (`COMPLETED` / `FAILED`), `reasonForIncompletion`, `outputData`, and `terminal` (maps to `FAILED_WITH_TERMINAL_ERROR` on Conductor).
+
+**Remaining gap:** This is convention-based on the return array; a stricter typed interface or DTO could reduce mistakes.
 
 ---
 
@@ -52,7 +52,7 @@ return ['status' => 'COMPLETED', 'outputData' => $output];
 
 ## 5. Conductor infrastructure is outside the package
 
-**Not a bug:** Local Conductor requires Redis/Elasticsearch (or other backends) per upstream docs. The PoC does not ship a full stack; use official Docker Compose or Orkes.
+**Not a bug:** Local Conductor requires Redis/Elasticsearch (or other backends) per upstream docs. This repo’s Docker Compose is an example stack only; use official Conductor docs or Orkes Cloud as needed.
 
 ---
 

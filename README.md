@@ -7,9 +7,9 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## Conductor / Orkes Laravel PoC (`feature/conductor-orkes-poc`)
+## Laravel + Conductor — e-commerce workflow demo
 
-This branch adds **`conductor/orkes-laravel`** from **[GitHub](https://github.com/zaeem2396/orkes-laravel)** (Composer VCS, `dev-main`) and a **real-time workflow dashboard** at **`/conductor-poc`**.
+This app uses **`conductor/orkes-laravel`** from **[GitHub](https://github.com/zaeem2396/orkes-laravel)** (Composer VCS, `dev-main`) to run an **`order_processing`** workflow with a simple **orders UI**.
 
 ### Docker (full stack)
 
@@ -19,10 +19,25 @@ From **`package-test/`**:
 docker compose up -d --build
 ```
 
-Then open **http://localhost:8000/conductor-poc** (Conductor UI: **http://localhost:8090**). See [CONDUCTOR_POC_TESTING.md](CONDUCTOR_POC_TESTING.md) §0.
+- **App:** http://localhost:8000 — **[/orders](http://localhost:8000/orders)** (create orders, live status)
+- **Conductor UI/API:** http://localhost:8090 (REST: `http://localhost:8090/api`)
+- **Workers:** `docker compose exec app php artisan conductor:work` (or run locally with `CONDUCTOR_SERVER` set)
+- **Seed:** `docker compose exec app php artisan demo:orders`
+- **Full testing & architecture guide:** [CONDUCTOR_ECOMMERCE_TESTING.md](CONDUCTOR_ECOMMERCE_TESTING.md) (step-by-step; replaces old `CONDUCTOR_POC_TESTING.md`)
+- **Short overview:** [docs/ECOMMERCE_WORKFLOW_DEMO.md](docs/ECOMMERCE_WORKFLOW_DEMO.md)
+- **Package notes:** [docs/ORKEES_LARAVEL_PACKAGE_BUGS.md](docs/ORKEES_LARAVEL_PACKAGE_BUGS.md)
 
-- **How to test:** [CONDUCTOR_POC_TESTING.md](CONDUCTOR_POC_TESTING.md)
-- **Package gaps / notes:** [docs/ORKEES_LARAVEL_PACKAGE_BUGS.md](docs/ORKEES_LARAVEL_PACKAGE_BUGS.md)
+### Automated tests (e-commerce PoC)
+
+```bash
+docker compose exec app php artisan test
+```
+
+`phpunit.xml` uses **SQLite `:memory:`**; the app container image includes **`pdo_sqlite`**. On the host, install **`ext-pdo_sqlite`** (or run tests only via Docker).
+
+Tests cover **`OrderWorkflow`** (task order, `payment_process` retries, **per-task `inputParameters`** wiring to `${workflow.input.*}`), **`OrderEcommerceFeatureTest`** (create order → DB + `Conductor::fake()` assertions, validation, JSON status), and the default Laravel examples.
+
+**`conductor/orkes-laravel`:** feature tests need a build where `Conductor::fake()`’s workflow client implements **`registerWorkflowDefinition`**, **`updateWorkflowDefinition`**, and **`getWorkflow`** (no-op / stub). Pin **`dev-main`** after that commit is on GitHub, or use a Composer **path** repository to `../orkes-laravel` while developing both repos locally.
 
 ---
 

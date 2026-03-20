@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Conductor / Orkes Laravel package config (published for PoC).
+ * Conductor / Orkes Laravel — e-commerce workflow demo (`order_processing`).
  *
  * @see vendor/conductor/orkes-laravel/config/conductor.php
  */
@@ -26,12 +26,14 @@ return [
     'retry_initial_delay_ms' => (int) env('CONDUCTOR_RETRY_INITIAL_DELAY_MS', 1000),
 
     /*
-     * Task handlers for php artisan conductor:work / conductor:local (PoC).
+     * Task handlers for php artisan conductor:work / conductor:local.
      */
     'task_handlers' => [
-        App\Conductor\Handlers\PocValidateTaskHandler::class,
-        App\Conductor\Handlers\PocProcessTaskHandler::class,
-        App\Conductor\Handlers\PocNotifyTaskHandler::class,
+        App\Tasks\InventoryTask::class,
+        App\Tasks\PaymentTask::class,
+        App\Tasks\FraudCheckTask::class,
+        App\Tasks\ShippingTask::class,
+        App\Tasks\NotificationTask::class,
     ],
 
 ];

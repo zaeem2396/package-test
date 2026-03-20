@@ -116,8 +116,8 @@
                                 </span>
                             </span>
                             <span>
-                                <a href="{{ url('/conductor-poc') }}" class="inline-flex items-center space-x-1 font-medium underline underline-offset-4 text-[#f53003] dark:text-[#FF4433]">
-                                    Conductor / Orkes Laravel PoC (real-time dashboard)
+                                <a href="{{ route('orders.index') }}" class="inline-flex items-center space-x-1 font-medium underline underline-offset-4 text-[#f53003] dark:text-[#FF4433]">
+                                    E-commerce workflow demo (orders + Conductor orchestration)
                                 </a>
                             </span>
                         </li>

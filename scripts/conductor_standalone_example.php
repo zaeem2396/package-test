@@ -25,11 +25,14 @@ $client = ConductorClient::fromArray([
     'timeout' => 10,
 ]);
 
-$def = Workflow::define('poc_realtime_demo')
-    ->description('Standalone script: DSL only (register commented out)')
-    ->task('poc_validate')
-    ->task('poc_process')
-    ->task('poc_notify');
+$def = Workflow::define('order_processing')
+    ->description('Standalone script: same task names as app/Workflows/OrderWorkflow (simplified; no retryCount)')
+    ->inputParameters(['order_id', 'amount', 'user_email'])
+    ->task('inventory_check')
+    ->task('payment_process')
+    ->task('fraud_check')
+    ->task('create_shipping')
+    ->task('send_notification');
 
 echo "=== Workflow DSL (toJson) ===\n";
 echo $def->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
@@ -39,7 +42,11 @@ echo $def->toJson(JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
 // echo "Registered metadata/workflow.\n";
 
 // Uncomment to start a run:
-// $id = $client->workflow()->start('poc_realtime_demo', ['message' => 'standalone', 'request_id' => 's1']);
+// $id = $client->workflow()->start('order_processing', [
+//     'order_id' => 1,
+//     'amount' => 99.99,
+//     'user_email' => 'demo@example.com',
+// ]);
 // echo "Started workflow: {$id}\n";
 
 echo "=== SDK entrypoints used: ConductorClient::fromArray, workflow(), (optional) register/start ===\n";
