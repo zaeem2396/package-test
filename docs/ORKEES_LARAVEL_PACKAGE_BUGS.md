@@ -1,67 +1,45 @@
-# `conductor/orkes-laravel` — issues / limitations found via package-test
+# `conductor/orkes-laravel` — integration notes
 
-These items are observations from integrating the package into **`package-test`** (e-commerce Conductor demo). They may be intentional design choices; treat as a backlog for the package maintainers.
+Observations from wiring this repo’s **e-commerce Conductor demo** into **`conductor/orkes-laravel`**. Items marked **Fixed upstream** have been addressed in the package (see branch / `main` on [orkes-laravel](https://github.com/zaeem2396/orkes-laravel)).
 
 ---
 
 ## Conductor semantics: workflow `input` vs SIMPLE task `inputData`
 
-**Not a package bug.** Conductor does **not** automatically copy workflow start `input` into each SIMPLE task. If polled tasks show **`inputData: {}`**, add per-task **`inputParameters`** in the workflow JSON (e.g. `"order_id": "${workflow.input.order_id}"`). The DSL’s `->inputParameters([...])` on `Workflow::define()` is workflow-level documentation only until the package adds helpers to map inputs onto each `->task()`.
+**Not a package bug.** Conductor does **not** automatically copy workflow start `input` into each SIMPLE task. Use per-task **`inputParameters`** (e.g. `"order_id": "${workflow.input.order_id}"`). This demo does that in `app/Workflows/OrderWorkflow.php`. The DSL’s `->inputParameters([...])` on `Workflow::define()` is workflow-level metadata until the package adds helpers to map inputs onto each `->task()`.
 
 ---
 
-## 1. Laravel `TaskHandler` return shape (partially addressed)
+## ~~`worker_concurrency` / `--concurrency` (misleading)~~ — **Fixed upstream**
 
-**Location:** `WorkerCommand`, `LocalCommand`, `TaskHandler` docblock
-
-Handlers may return **plain output** (wrapped as `COMPLETED`) **or** an explicit array including `status` (`COMPLETED` / `FAILED`), `reasonForIncompletion`, `outputData`, and `terminal` (maps to `FAILED_WITH_TERMINAL_ERROR` on Conductor).
-
-**Remaining gap:** This is convention-based on the return array; a stricter typed interface or DTO could reduce mistakes.
+Previously the publishable config exposed `worker_concurrency` and `conductor:work` had a no-op `--concurrency` flag. These were removed in favor of documenting **process-based scaling** (multiple `conductor:work` processes). Config now uses **`worker_max_retries`** / `CONDUCTOR_WORKER_MAX_RETRIES` for **handler** exception retries.
 
 ---
 
-## 2. `worker_concurrency` and `--concurrency` are not implemented
+## ~~`Worker` `maxRetries` not exposed in Laravel~~ — **Fixed upstream**
 
-**Location:** `config/conductor.php` (`worker_concurrency`), `WorkerCommand` (`--concurrency` described as “reserved”)
-
-**Impact:** Multi-worker concurrency must be achieved by running **multiple processes** (e.g. several `php artisan conductor:work` terminals or a process manager), not a single command instance.
-
-**Suggestion:** Either implement pooling / fork / async poll, or remove/rename the option and document process-based scaling only.
+`config/conductor.php` includes **`worker_max_retries`**; `conductor:work` and `conductor:local` pass it into `Conductor\Task\Worker`.
 
 ---
 
-## 3. `Worker` constructor supports `maxRetries`; Laravel does not expose it
+## ~~`ConductorClient::fromArray` without HTTP retry~~ — **Fixed upstream**
 
-**Location:** `Conductor\Task\Worker` vs `WorkerCommand` / `LocalCommand`
-
-**Impact:** Retry behavior for handler exceptions is fixed at the `Worker` default unless using the SDK worker directly in custom code.
-
-**Suggestion:** Add `conductor.worker_max_retries` (or similar) and pass it into `new Worker(...)`.
+`fromArray()` accepts **`retry_enabled`**, **`retry_max_attempts`**, **`retry_initial_delay_ms`** and wires the same **`RetryHandler`** pattern as the Laravel service provider.
 
 ---
 
-## 4. Standalone `ConductorClient::fromArray` vs Laravel HTTP client feature parity
+## Laravel `TaskHandler` return shape (convention)
 
-**Location:** `ConductorClient::fromArray()` builds a plain `HttpClient` **without** `RetryHandler`.
-
-**Impact:** Laravel apps get optional retry via config; standalone scripts must construct `HttpClient` manually to match.
-
-**Suggestion:** Document clearly, or extend `fromArray()` to accept retry options.
+Handlers return either plain output (treated as `COMPLETED`) or an array with `status`, `reasonForIncompletion`, `outputData`, `terminal`. A stricter typed API could reduce mistakes; tracked as an enhancement, not a defect.
 
 ---
 
-## 5. Conductor infrastructure is outside the package
+## Conductor infrastructure
 
-**Not a bug:** Local Conductor requires Redis/Elasticsearch (or other backends) per upstream docs. This repo’s Docker Compose is an example stack only; use official Conductor docs or Orkes Cloud as needed.
-
----
-
-## 6. Search / inspect query dialect
-
-**Location:** `WorkflowClient::search()`, `InspectCommand`
-
-**Impact:** Query strings are server-specific; failed searches often look like generic HTTP errors. Operators should refer to their Conductor version’s search documentation.
+**Not a package issue:** running Conductor OSS requires Redis, Elasticsearch (or your stack’s equivalents), etc. This repo’s **`docker-compose.yml`** is an example only.
 
 ---
 
-If you fix any of the above in **`orkes-laravel`**, this file can be trimmed or linked to CHANGELOG entries.
+## Search / inspect query dialect
+
+**Operational:** `WorkflowClient::search()` and `conductor:inspect` query strings are server-specific; see your Conductor version’s search documentation.

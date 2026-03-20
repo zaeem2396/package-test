@@ -342,12 +342,12 @@ php artisan demo:orders --count=10
 
 ## 14. End-to-end walkthroughs
 
-### 14.1 Happy path (manual)
+### 14.1 Happy path (Docker)
 
-1. `docker compose up -d` (or local MySQL + Conductor).
-2. `php artisan migrate`.
+1. From **`package-test/`:** `docker compose up -d --build`
+2. `docker compose exec app php artisan migrate --force`
 3. Open **http://localhost:8000/orders**, submit the form.
-4. In a terminal: `php artisan conductor:work`.
+4. `docker compose exec app php artisan conductor:work` (or rely on the Compose **conductor-worker** service).
 5. Watch **order detail**: steps advance; timeline fills; status → **completed** when notification runs.
 
 ### 14.2 Observe a payment retry
@@ -364,10 +364,10 @@ php artisan demo:orders --count=10
 ### 14.4 PHPUnit
 
 ```bash
-php artisan test
+docker compose exec app php artisan test
 ```
 
-(Add feature tests against `Order` routes with `Conductor::fake()` if you want CI without a live Conductor.)
+(Feature tests use `Conductor::fake()`; no live Conductor required.)
 
 ---
 

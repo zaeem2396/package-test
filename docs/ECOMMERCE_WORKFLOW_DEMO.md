@@ -23,15 +23,17 @@ Workflow start `input` is mapped into each SIMPLE task via **`inputParameters`**
 | `app/Services/OrderService.php` | DB + register/start workflow + events |
 | `resources/views/orders/` | List + detail (auto-poll) |
 
-## Run
+## Run (Docker)
 
-1. **Migrate:** `php artisan migrate`  
-2. **Conductor + DB** (e.g. Docker Compose from repo root).  
-3. **Workers:** `php artisan conductor:work`  
-4. **UI:** [GET /orders](http://localhost:8000/orders) — create orders with **POST /orders**  
-5. **Bulk demo:** `php artisan demo:orders --count=8`
+From repo root:
 
-Logs: `storage/logs/laravel.log` (lines like `Order #12 → Payment FAILED (retrying)`).
+1. `docker compose up -d --build`
+2. `docker compose exec app php artisan migrate --force`
+3. **Workers:** `docker compose exec app php artisan conductor:work` (or the `conductor-worker` service)
+4. **UI:** [http://localhost:8000/orders](http://localhost:8000/orders) — create orders with **POST /orders**
+5. **Bulk demo:** `docker compose exec app php artisan demo:orders --count=8`
+
+Logs (in container): `storage/logs/laravel.log` (e.g. `Order #12 → Payment FAILED (retrying)`).
 
 ## API
 

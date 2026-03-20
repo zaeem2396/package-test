@@ -15,7 +15,7 @@ return [
 
     'timeout' => (int) env('CONDUCTOR_TIMEOUT', 30),
 
-    'worker_concurrency' => (int) env('CONDUCTOR_WORKER_CONCURRENCY', 5),
+    'worker_max_retries' => (int) env('CONDUCTOR_WORKER_MAX_RETRIES', 0),
 
     'poll_interval' => (int) env('CONDUCTOR_POLL_INTERVAL', 2),
 
