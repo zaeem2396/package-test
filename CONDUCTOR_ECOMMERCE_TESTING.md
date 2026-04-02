@@ -18,7 +18,7 @@ This document replaces the old **`CONDUCTOR_POC_TESTING.md`**. It describes **ev
 10. [The worker (`php artisan conductor:work`)](#10-the-worker-php-artisan-conductorwork)
 11. [HTTP routes & UI](#11-http-routes--ui)
 12. [Logging & timeline](#12-logging--timeline)
-13. [Demo command (`demo:orders`)](#13-demo-command-demoorders)
+13. [Demo command (`demo:orders`)](#13-demo-command-demoorders) — includes [13.1 `conductor:start`](#131-start-workflow-via-artisan-conductorstart)
 14. [End-to-end walkthroughs](#14-end-to-end-walkthroughs)
 15. [Troubleshooting](#15-troubleshooting)
 16. [Optional: Conductor UI & API](#16-optional-conductor-ui--api)
@@ -337,6 +337,17 @@ php artisan demo:orders --count=10
 3. Each call runs **`OrderService::create()`** → workflows started.
 4. Prints a line per order with **id**, **email**, **amount**, **workflow_id**.
 5. Reminds you to run **`conductor:work`** separately.
+
+### 13.1 Start workflow via Artisan (`conductor:start`)
+
+You can start **`order_processing`** directly (without the UI or `demo:orders`) as long as **`order_id` exists** in `orders` and workers are polling:
+
+```bash
+docker compose exec app php artisan conductor:start order_processing \
+  --input='{"order_id":1,"amount":99.99,"user_email":"you@example.com"}'
+```
+
+Same flags as in **`php artisan conductor:start --help`** (e.g. `--correlation-id`, `--wf-version`). Orkes-specific notes: [docs/ORKEES_CLOUD_SETUP.md](docs/ORKEES_CLOUD_SETUP.md).
 
 ---
 

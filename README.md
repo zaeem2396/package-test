@@ -99,6 +99,18 @@ This workflow demo lives on a **feature branch**, not `main`. Clone the repo, th
 | **Conductor API** | `http://localhost:8090/api` (UI often at [http://localhost:8090](http://localhost:8090)) |
 | **Workers** | `docker compose exec app php artisan conductor:work` — for **Orkes**, ensure `.env` has `CONDUCTOR_SERVER_URL` + auth; `conductor-worker` uses the same `env_file` (see [docs/ORKEES_CLOUD_SETUP.md](docs/ORKEES_CLOUD_SETUP.md)) |
 | **Demo orders** | `docker compose exec app php artisan demo:orders` |
+| **Start workflow (CLI)** | `conductor:start` — [section below](#start-workflow-cli-conductorstart) |
+
+### Start workflow (CLI): conductor:start
+
+After the stack is up and workers are polling, you can start **`order_processing`** from Artisan (same as in [docs/ORKEES_CLOUD_SETUP.md](docs/ORKEES_CLOUD_SETUP.md)). Use `docker compose exec app` so the command runs inside the app container with the correct `.env`.
+
+```bash
+docker compose exec app php artisan conductor:start order_processing \
+  --input='{"order_id":1,"amount":99.99,"user_email":"you@example.com"}'
+```
+
+For this demo app, **`order_id` must refer to an existing row** in the `orders` table (create one via the UI or `demo:orders`), or later tasks can fail with “order not found.” Optional flags from the package: `--correlation-id=…`, `--wf-version=…` (see `php artisan conductor:start --help`).
 
 ### Documentation (this repo)
 
