@@ -1,133 +1,135 @@
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Laravel + Conductor (Orkes / Conductor OSS) — e-commerce workflow demo
 
-## NATS Queue App
+Sample app using **[conductor/orkes-laravel](https://github.com/zaeem2396/orkes-laravel)** (`dev-main` via Composer VCS) to run an **`order_processing`** workflow with a small **orders UI** (`/orders`).
 
-This project is a **full NATS integration** demo using the [zaeem2396/laravel-nats](https://github.com/zaeem2396/laravel-nats) package from Packagist. It showcases publish, request/reply, NATS queue driver, delayed jobs (JetStream), Dead Letter Queue, and JetStream streams.
+### Prerequisites
 
-### How to run (Docker — recommended)
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/)
+- [Git](https://git-scm.com/) (to clone and switch branches)
 
-1. **Prerequisites:** Docker and Docker Compose; laravel-nats package at `../laravel-nats` (sibling of this repo). The Docker build and runtime mount this path so the package resolves.
+### Getting started (step by step)
 
-2. **Start services:**
+This workflow demo lives on a **feature branch**, not `main`. Clone the repo, then **check out the branch** before installing dependencies or running Docker.
+
+1. **Clone and enter the project**
+
    ```bash
+   git clone git@github.com:zaeem2396/package-test.git
    cd package-test
-   docker compose up -d
    ```
 
-3. **Run migrations** (first time or after pulling new migrations):
+   (Use HTTPS if you prefer: `https://github.com/zaeem2396/package-test.git`.)
+
+2. **Switch to the Conductor / Orkes demo branch**
+
    ```bash
+   git fetch origin
+   git checkout feature/conductor-orkes-poc
+   ```
+
+   If your remote is not named `origin`, use the name shown by `git remote -v` (for example `git fetch package-test` and `git checkout feature/conductor-orkes-poc`).
+
+3. **Environment file**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Edit `.env` for your setup:
+
+   - **Docker Compose (default in this branch):** keep MySQL/redis settings aligned with `docker-compose.yml` (the stack provides `mysql`, `redis`, etc.). The first `docker compose up` will need a valid `APP_KEY`; generate one after containers are up with `docker compose exec app php artisan key:generate --force` if needed.
+   - **Orkes Cloud:** merge values from [docs/env-orkes-snippet.env](docs/env-orkes-snippet.env) and set `CONDUCTOR_SERVER_URL`, `CONDUCTOR_AUTH_KEY`, and `CONDUCTOR_AUTH_SECRET`. See [docs/ORKEES_CLOUD_SETUP.md](docs/ORKEES_CLOUD_SETUP.md).
+   - **Local Conductor OSS in Compose:** you can point `CONDUCTOR_SERVER` at `http://conductor-server:8080/api` once the `conductor-server` service is healthy (see [CONDUCTOR_ECOMMERCE_TESTING.md](CONDUCTOR_ECOMMERCE_TESTING.md)).
+
+   Never commit real secrets; `.env` is gitignored.
+
+4. **Optional: local SDK clone for live `orkes-laravel`**
+
+   If you have `../orkes-laravel` next to this repo, `docker-compose.yml` bind-mounts it over `vendor/conductor/orkes-laravel`. Skip this if you only use the package from Composer.
+
+5. **Build and start the stack**
+
+   From the **repository root** (`package-test/`):
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+   Wait until app/database services are healthy (`docker compose ps`).
+
+6. **Application key and database (first run)**
+
+   ```bash
+   docker compose exec app php artisan key:generate --force
    docker compose exec app php artisan migrate --force
    ```
 
-4. **Start the NATS queue worker** (required for tasks and delayed emails):
+7. **Run workers (required for workflow tasks)**
+
+   In another terminal, either start the dedicated worker service (if defined in your compose file) or:
+
    ```bash
-   docker compose exec app php artisan queue:work nats
-   ```
-   Keep this terminal open. Or run the worker in the background:
-   ```bash
-   docker compose run -d --name package_test_worker app php artisan queue:work nats --sleep=3
+   docker compose exec app php artisan conductor:work
    ```
 
-5. **Open the app:** [http://localhost:2331](http://localhost:2331) (redirects to Dashboard). **Mailhog (emails):** [http://localhost:8025](http://localhost:8025).
+   For **Orkes**, workers must use the same `CONDUCTOR_SERVER_URL` and credentials as the app. Tasks stay **Scheduled** until a worker polls.
 
-6. **Optional:** Run `docker compose exec app php artisan nats:subscribe` in another terminal to log broadcasts and enable Ping (request/reply) on the Broadcast page.
+8. **Try the demo**
 
-**Notes:** The app container uses `NATS_HOST=nats`, `MAIL_HOST=mailhog`, and `APP_URL=http://localhost:2331` from `docker-compose.yml`. The entrypoint runs `php artisan config:clear` on startup so Laravel uses the container’s environment (avoids “Connection to localhost:4222 refused” when `.env` had different values).
+   - Open the **orders UI:** [http://localhost:8000/orders](http://localhost:8000/orders)
+   - Seed demo orders and workflows:
 
-### Running without Docker
+     ```bash
+     docker compose exec app php artisan demo:orders
+     ```
 
-1. Start NATS (e.g. `docker compose up -d nats`) and set `NATS_HOST=localhost` in `.env`. Configure DB and mail (e.g. `MAIL_MAILER=log` or smtp to Mailhog on `127.0.0.1:1025`).
-2. `composer install` and `php artisan migrate`.
-3. `php artisan serve` then open [http://localhost:8000](http://localhost:8000).
-4. In another terminal: `php artisan queue:work nats`.
+   If you start a workflow manually (`conductor:start`), ensure the `order_id` exists in the `orders` table or inventory tasks will fail—see [CONDUCTOR_ECOMMERCE_TESTING.md](CONDUCTOR_ECOMMERCE_TESTING.md).
 
-### Event-Driven Order PoC (portfolio-ready)
+**Orkes-only shortcut:** import [docs/orkes/order_processing_workflow.json](docs/orkes/order_processing_workflow.json) into your Orkes cluster, configure `.env` as in [docs/ORKEES_CLOUD_SETUP.md](docs/ORKEES_CLOUD_SETUP.md), then run steps 5–8 above.
 
-A **full-feature PoC** demonstrates publish/subscribe, wildcard subscriptions (`orders.*`), request/reply (`payments.validate`), Laravel Queue over NATS, multiple connections (default + analytics), JetStream, and event chaining. See **[ARCHITECTURE.md](ARCHITECTURE.md)** for the message flow diagram and code snippets.
+### Run with Docker (summary)
 
-**Run the PoC:**
+`docker-compose.yml` bind-mounts `../orkes-laravel` over `vendor/conductor/orkes-laravel` when that path exists (live SDK during development). Remove or adjust that mount if you rely only on Composer.
 
-1. Start stack and migrate: `docker compose up -d` then `docker compose exec app php artisan migrate --force`.
-2. Optional – create JetStream stream for order events: `docker compose exec app php artisan nats:setup-orders-stream`.
-3. In **three separate terminals** (or background processes), run:
-   - `docker compose exec app php artisan nats:payment-responder` (RPC responder)
-   - `docker compose exec app php artisan nats:orders-subscriber` (wildcard `orders.*` logger)
-   - `docker compose exec app php artisan queue:work nats` (NATS queue worker)
-4. Open **[Orders (PoC)](http://localhost:2331/orders/create)** and create an order. Flow: `orders.created` → `payments.validate` (reply) → job dispatched → job publishes `orders.shipped` and `metrics.orders` (analytics).
+| Service | URL / command |
+|--------|----------------|
+| **Orders UI** | [http://localhost:8000/orders](http://localhost:8000/orders) |
+| **Conductor API** | `http://localhost:8090/api` (UI often at [http://localhost:8090](http://localhost:8090)) |
+| **Workers** | `docker compose exec app php artisan conductor:work` — for **Orkes**, ensure `.env` has `CONDUCTOR_SERVER_URL` + auth; `conductor-worker` uses the same `env_file` (see [docs/ORKEES_CLOUD_SETUP.md](docs/ORKEES_CLOUD_SETUP.md)) |
+| **Demo orders** | `docker compose exec app php artisan demo:orders` |
+| **Start workflow (CLI)** | `conductor:start` — [section below](#start-workflow-cli-conductorstart) |
 
-### App features (NATS Dashboard at /nats)
+### Start workflow (CLI): conductor:start
 
-| Feature | Description |
-|--------|-------------|
-| **Publish** | Publish a message to any NATS subject (JSON payload). |
-| **Request/Reply** | Send a request and wait for a reply (requires a responder). |
-| **Queue: dispatch** | Dispatch `ProcessOrderJob` to the NATS queue. |
-| **Queue: delayed** | Schedule `SendReminderJob` with a delay (JetStream). |
-| **Queue: failing** | Dispatch a job that fails (DLQ + `failed_jobs` demo). |
-| **JetStream Streams** | List JetStream streams. |
-| **Failed Jobs** | List failed queue jobs from the database. |
+After the stack is up and workers are polling, you can start **`order_processing`** from Artisan (same as in [docs/ORKEES_CLOUD_SETUP.md](docs/ORKEES_CLOUD_SETUP.md)). Use `docker compose exec app` so the command runs inside the app container with the correct `.env`.
 
-- **Dead Letter Queue:** `NATS_QUEUE_DLQ=failed` in queue config.
-- **Delayed jobs:** JetStream; `NATS_QUEUE_DELAYED_ENABLED=true`.
-- **Tests:** Run `composer test` for Unit, Feature, and UI (acceptance) tests.
-- **Usage:** See [usage.md](usage.md) for setup, NATS dashboard usage, queue worker, and troubleshooting.
+```bash
+docker compose exec app php artisan conductor:start order_processing \
+  --input='{"order_id":1,"amount":99.99,"user_email":"you@example.com"}'
+```
 
----
+For this demo app, **`order_id` must refer to an existing row** in the `orders` table (create one via the UI or `demo:orders`), or later tasks can fail with “order not found.” Optional flags from the package: `--correlation-id=…`, `--wf-version=…` (see `php artisan conductor:start --help`).
 
-## About Laravel
+### Documentation (this repo)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+| Doc | Description |
+|-----|-------------|
+| [CONDUCTOR_ECOMMERCE_TESTING.md](CONDUCTOR_ECOMMERCE_TESTING.md) | Full runbook: stack, env, workflow, handlers, troubleshooting |
+| [docs/ORKEES_CLOUD_SETUP.md](docs/ORKEES_CLOUD_SETUP.md) | **Orkes Cloud:** credentials, JSON to import, `.env`, `conductor:start` |
+| [docs/orkes/order_processing_workflow.json](docs/orkes/order_processing_workflow.json) | Workflow definition to paste/import into Orkes |
+| [docs/ECOMMERCE_WORKFLOW_DEMO.md](docs/ECOMMERCE_WORKFLOW_DEMO.md) | Short overview of the workflow |
+| [docs/ORKEES_LARAVEL_PACKAGE_BUGS.md](docs/ORKEES_LARAVEL_PACKAGE_BUGS.md) | Integration notes / upstream tracking |
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Automated tests
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+docker compose exec app php artisan test
+```
 
-## Learning Laravel
+Uses SQLite in-memory in `phpunit.xml`; the app image includes `pdo_sqlite`. Tests use `Conductor::fake()` (no live Conductor required).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### License
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This demo app follows the same **[MIT license](https://opensource.org/licenses/MIT)** as the default Laravel application template.

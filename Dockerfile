@@ -1,36 +1,36 @@
-FROM php:8.4-fpm
+# Build from this directory (package-test): `docker compose build`
+# Installs `conductor/orkes-laravel` from GitHub via Composer VCS (see composer.json).
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
+FROM php:8.3-cli-bookworm
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng-dev \
-    libjpeg-dev \
+    libjpeg62-turbo-dev \
     libfreetype6-dev \
     libonig-dev \
+    libzip-dev \
     zip \
     unzip \
     git \
+    curl \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql mbstring
+    && docker-php-ext-install -j$(nproc) gd pdo pdo_mysql mbstring zip \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Set working directory
 WORKDIR /var/www/html
 
-# Copy composer files
 COPY composer.json composer.lock ./
+RUN composer install --no-interaction --no-scripts
 
-# Install dependencies
-RUN composer install --no-scripts --no-autoloader
-
-# Copy application files
 COPY . .
 
-# Generate autoload files
-RUN composer dump-autoload --no-scripts --no-dev --optimize
+RUN composer dump-autoload --optimize --no-scripts
 
-# Expose port 8000
 EXPOSE 8000
 
-CMD php artisan serve --host=0.0.0.0 --port=8000
+ENTRYPOINT ["sh", "/var/www/html/docker/entrypoint.sh"]
+# --no-reload: Laravel otherwise spawns the PHP server with only a small env allowlist,
+# stripping Docker Compose vars like CONDUCTOR_SERVER (see ServeCommand::$passthroughVariables).
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000", "--no-reload"]

@@ -5,8 +5,15 @@
     "description": "The skeleton application for the Laravel framework.",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/zaeem2396/orkes-laravel"
+        }
+    ],
     "require": {
         "php": "^8.2",
+        "conductor/orkes-laravel": "dev-main",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1"
     },
@@ -81,6 +88,9 @@
             "php-http/discovery": true
         }
     },
-    "minimum-stability": "stable",
+    "suggest": {
+        "ext-pdo_sqlite": "Required for php artisan test on the host when using the default SQLite :memory: database in phpunit.xml"
+    },
+    "minimum-stability": "dev",
     "prefer-stable": true
 }

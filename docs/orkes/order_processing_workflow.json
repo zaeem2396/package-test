@@ -1,0 +1,61 @@
+{
+  "name": "order_processing",
+  "description": "E-commerce: inventory → payment → fraud → shipping → notification",
+  "version": 1,
+  "tasks": [
+    {
+      "name": "inventory_check",
+      "taskReferenceName": "inventory_check_ref",
+      "type": "SIMPLE",
+      "inputParameters": {
+        "order_id": "${workflow.input.order_id}",
+        "amount": "${workflow.input.amount}",
+        "user_email": "${workflow.input.user_email}"
+      }
+    },
+    {
+      "name": "payment_process",
+      "taskReferenceName": "payment_process_ref",
+      "type": "SIMPLE",
+      "retryCount": 5,
+      "inputParameters": {
+        "order_id": "${workflow.input.order_id}",
+        "amount": "${workflow.input.amount}",
+        "user_email": "${workflow.input.user_email}"
+      }
+    },
+    {
+      "name": "fraud_check",
+      "taskReferenceName": "fraud_check_ref",
+      "type": "SIMPLE",
+      "inputParameters": {
+        "order_id": "${workflow.input.order_id}",
+        "amount": "${workflow.input.amount}",
+        "user_email": "${workflow.input.user_email}"
+      }
+    },
+    {
+      "name": "create_shipping",
+      "taskReferenceName": "create_shipping_ref",
+      "type": "SIMPLE",
+      "inputParameters": {
+        "order_id": "${workflow.input.order_id}",
+        "amount": "${workflow.input.amount}",
+        "user_email": "${workflow.input.user_email}"
+      }
+    },
+    {
+      "name": "send_notification",
+      "taskReferenceName": "send_notification_ref",
+      "type": "SIMPLE",
+      "inputParameters": {
+        "order_id": "${workflow.input.order_id}",
+        "amount": "${workflow.input.amount}",
+        "user_email": "${workflow.input.user_email}"
+      }
+    }
+  ],
+  "inputParameters": ["order_id", "amount", "user_email"],
+  "schemaVersion": 2,
+  "ownerEmail": "orders@ecommerce-demo.local"
+}
