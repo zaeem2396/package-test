@@ -9,9 +9,21 @@ declare(strict_types=1);
  */
 return [
 
-    'base_url' => env('CONDUCTOR_SERVER', 'http://127.0.0.1:8080/api'),
+    /*
+     * API base URL. Prefer CONDUCTOR_SERVER_URL for Orkes; falls back to CONDUCTOR_SERVER.
+     * @see docs/ORKEES_CLOUD_SETUP.md
+     */
+    'base_url' => env('CONDUCTOR_SERVER_URL', env('CONDUCTOR_SERVER', 'http://127.0.0.1:8080/api')),
 
+    /** Static JWT, or leave unset and use CONDUCTOR_AUTH_KEY + CONDUCTOR_AUTH_SECRET (Orkes). */
     'auth_token' => env('CONDUCTOR_TOKEN'),
+
+    'auth_key' => env('CONDUCTOR_AUTH_KEY'),
+
+    'auth_secret' => env('CONDUCTOR_AUTH_SECRET'),
+
+    /** `bearer` or `orkes` (X-Authorization). Orkes UI tokens need `orkes`. */
+    'auth_header_style' => env('CONDUCTOR_AUTH_HEADER_STYLE', 'bearer'),
 
     'timeout' => (int) env('CONDUCTOR_TIMEOUT', 30),
 

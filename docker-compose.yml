@@ -1,5 +1,11 @@
 # Full stack: Laravel + MySQL + Conductor OSS (Postgres archive + Redis + ES7 + server) + workers.
 #
+# Orkes Cloud: set CONDUCTOR_SERVER_URL, CONDUCTOR_AUTH_KEY, CONDUCTOR_AUTH_SECRET in `.env`.
+# Do not set CONDUCTOR_SERVER here for app/worker services — it would override `.env` and break Orkes.
+#
+# The bind mount below overlays `vendor/conductor/orkes-laravel` with your local SDK clone (Orkes auth + APIs).
+# Remove that line if you only use the package from Composer (e.g. CI) and do not have ../orkes-laravel.
+#
 # Run from this directory (package-test). `conductor/orkes-laravel` is installed from GitHub (Composer VCS).
 #
 #   docker compose up -d --build
@@ -100,6 +106,8 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
       DB_CONNECTION: mysql
       DB_HOST: mysql
@@ -107,11 +115,11 @@ services:
       DB_USERNAME: laravel
       DB_PASSWORD: secret
       QUEUE_CONNECTION: database
-      CONDUCTOR_SERVER: http://conductor-server:8080/api
       CONDUCTOR_POLL_INTERVAL: "2"
       SERVICE_ROLE: web
     volumes:
       - .:/var/www/html
+      - ../orkes-laravel:/var/www/html/vendor/conductor/orkes-laravel
     networks:
       - app-network
     depends_on:
@@ -126,6 +134,8 @@ services:
     container_name: laravel_queue
     restart: unless-stopped
     command: ["php", "artisan", "queue:work", "database", "--sleep=3", "--tries=3"]
+    env_file:
+      - .env
     environment:
       DB_CONNECTION: mysql
       DB_HOST: mysql
@@ -133,10 +143,10 @@ services:
       DB_USERNAME: laravel
       DB_PASSWORD: secret
       QUEUE_CONNECTION: database
-      CONDUCTOR_SERVER: http://conductor-server:8080/api
       SERVICE_ROLE: worker
     volumes:
       - .:/var/www/html
+      - ../orkes-laravel:/var/www/html/vendor/conductor/orkes-laravel
     networks:
       - app-network
     depends_on:
@@ -151,6 +161,8 @@ services:
     container_name: laravel_conductor_worker
     restart: unless-stopped
     command: ["php", "artisan", "conductor:work"]
+    env_file:
+      - .env
     environment:
       DB_CONNECTION: mysql
       DB_HOST: mysql
@@ -158,17 +170,15 @@ services:
       DB_USERNAME: laravel
       DB_PASSWORD: secret
       QUEUE_CONNECTION: database
-      CONDUCTOR_SERVER: http://conductor-server:8080/api
       CONDUCTOR_POLL_INTERVAL: "2"
       SERVICE_ROLE: worker
     volumes:
       - .:/var/www/html
+      - ../orkes-laravel:/var/www/html/vendor/conductor/orkes-laravel
     networks:
       - app-network
     depends_on:
       mysql:
-        condition: service_healthy
-      conductor-server:
         condition: service_healthy
       app:
         condition: service_started
