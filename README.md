@@ -7,26 +7,91 @@ Sample app using **[conductor/orkes-laravel](https://github.com/zaeem2396/orkes-
 ### Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/)
+- [Git](https://git-scm.com/) (to clone and switch branches)
 
-### Run with Docker (recommended)
+### Getting started (step by step)
 
-From the **repository root** (`package-test/`):
+This workflow demo lives on a **feature branch**, not `main`. Clone the repo, then **check out the branch** before installing dependencies or running Docker.
 
-```bash
-docker compose up -d --build
-```
+1. **Clone and enter the project**
+
+   ```bash
+   git clone git@github.com:zaeem2396/package-test.git
+   cd package-test
+   ```
+
+   (Use HTTPS if you prefer: `https://github.com/zaeem2396/package-test.git`.)
+
+2. **Switch to the Conductor / Orkes demo branch**
+
+   ```bash
+   git fetch origin
+   git checkout feature/conductor-orkes-poc
+   ```
+
+   If your remote is not named `origin`, use the name shown by `git remote -v` (for example `git fetch package-test` and `git checkout feature/conductor-orkes-poc`).
+
+3. **Environment file**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Edit `.env` for your setup:
+
+   - **Docker Compose (default in this branch):** keep MySQL/redis settings aligned with `docker-compose.yml` (the stack provides `mysql`, `redis`, etc.). The first `docker compose up` will need a valid `APP_KEY`; generate one after containers are up with `docker compose exec app php artisan key:generate --force` if needed.
+   - **Orkes Cloud:** merge values from [docs/env-orkes-snippet.env](docs/env-orkes-snippet.env) and set `CONDUCTOR_SERVER_URL`, `CONDUCTOR_AUTH_KEY`, and `CONDUCTOR_AUTH_SECRET`. See [docs/ORKEES_CLOUD_SETUP.md](docs/ORKEES_CLOUD_SETUP.md).
+   - **Local Conductor OSS in Compose:** you can point `CONDUCTOR_SERVER` at `http://conductor-server:8080/api` once the `conductor-server` service is healthy (see [CONDUCTOR_ECOMMERCE_TESTING.md](CONDUCTOR_ECOMMERCE_TESTING.md)).
+
+   Never commit real secrets; `.env` is gitignored.
+
+4. **Optional: local SDK clone for live `orkes-laravel`**
+
+   If you have `../orkes-laravel` next to this repo, `docker-compose.yml` bind-mounts it over `vendor/conductor/orkes-laravel`. Skip this if you only use the package from Composer.
+
+5. **Build and start the stack**
+
+   From the **repository root** (`package-test/`):
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+   Wait until app/database services are healthy (`docker compose ps`).
+
+6. **Application key and database (first run)**
+
+   ```bash
+   docker compose exec app php artisan key:generate --force
+   docker compose exec app php artisan migrate --force
+   ```
+
+7. **Run workers (required for workflow tasks)**
+
+   In another terminal, either start the dedicated worker service (if defined in your compose file) or:
+
+   ```bash
+   docker compose exec app php artisan conductor:work
+   ```
+
+   For **Orkes**, workers must use the same `CONDUCTOR_SERVER_URL` and credentials as the app. Tasks stay **Scheduled** until a worker polls.
+
+8. **Try the demo**
+
+   - Open the **orders UI:** [http://localhost:8000/orders](http://localhost:8000/orders)
+   - Seed demo orders and workflows:
+
+     ```bash
+     docker compose exec app php artisan demo:orders
+     ```
+
+   If you start a workflow manually (`conductor:start`), ensure the `order_id` exists in the `orders` table or inventory tasks will fail—see [CONDUCTOR_ECOMMERCE_TESTING.md](CONDUCTOR_ECOMMERCE_TESTING.md).
+
+**Orkes-only shortcut:** import [docs/orkes/order_processing_workflow.json](docs/orkes/order_processing_workflow.json) into your Orkes cluster, configure `.env` as in [docs/ORKEES_CLOUD_SETUP.md](docs/ORKEES_CLOUD_SETUP.md), then run steps 5–8 above.
+
+### Run with Docker (summary)
 
 `docker-compose.yml` bind-mounts `../orkes-laravel` over `vendor/conductor/orkes-laravel` when that path exists (live SDK during development). Remove or adjust that mount if you rely only on Composer.
-
-First-time database:
-
-```bash
-docker compose exec app php artisan migrate --force
-```
-
-**Orkes Cloud quick path:** copy [docs/env-orkes-snippet.env](docs/env-orkes-snippet.env) into your `.env`, set `CONDUCTOR_SERVER_URL`, `CONDUCTOR_AUTH_KEY`, and `CONDUCTOR_AUTH_SECRET`, import [docs/orkes/order_processing_workflow.json](docs/orkes/order_processing_workflow.json) into Orkes, then run `docker compose up -d` and `php artisan conductor:work` (or the `conductor-worker` service). Tasks stay **Scheduled** until a worker polls with matching config.
-
-**Demo orders:** `demo:orders` creates DB rows and starts workflows. If you start a workflow manually (`conductor:start`), ensure the `order_id` exists in `orders` or inventory tasks will fail—see [CONDUCTOR_ECOMMERCE_TESTING.md](CONDUCTOR_ECOMMERCE_TESTING.md).
 
 | Service | URL / command |
 |--------|----------------|
