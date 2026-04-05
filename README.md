@@ -1,137 +1,98 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# package-test — Pinecone (Vectora) demo
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel app demonstrating **[vectora/laravel-pinecone](https://github.com/zaeem2396/vectora)** against [Pinecone](https://www.pinecone.io/): config, **Vectora Studio** UI, smoke command, and tests.
 
-## NATS Queue App
+## Switch to this branch
 
-This project is a **full NATS integration** demo using the [zaeem2396/laravel-nats](https://github.com/zaeem2396/laravel-nats) package from Packagist. It showcases publish, request/reply, NATS queue driver, delayed jobs (JetStream), Dead Letter Queue, and JetStream streams.
+The Pinecone / Vectora work lives on a dedicated branch. After cloning, check it out before running anything:
 
-### How to run (Docker — recommended)
+```bash
+git fetch origin
+git checkout feat/pinecone-laravel
+```
 
-1. **Prerequisites:** Docker and Docker Compose; laravel-nats package at `../laravel-nats` (sibling of this repo). The Docker build and runtime mount this path so the package resolves.
+Use your remote name if it is not `origin` (for example `package-test`).
 
-2. **Start services:**
+## Run with Docker (recommended)
+
+**This project is intended to be run with Docker Compose.** The stack provides PHP, MySQL, and the Laravel app on port **8000**.
+
+1. **Prerequisites:** [Docker](https://docs.docker.com/get-docker/) and Docker Compose; Pinecone credentials in `.env` (see below).
+
+2. **From the repo root:**
+
    ```bash
-   cd package-test
-   docker compose up -d
+   docker compose up -d --build
    ```
 
-3. **Run migrations** (first time or after pulling new migrations):
+3. **Install dependencies and migrate** (first time or after pulling changes):
+
    ```bash
+   docker compose exec app composer install
+   docker compose exec app php artisan key:generate --force
    docker compose exec app php artisan migrate --force
    ```
 
-4. **Start the NATS queue worker** (required for tasks and delayed emails):
+4. **Pinecone environment** — `config/pinecone.php` is already in the repo; tune behavior with `.env`. Edit `.env` on the host (it is mounted into the container). Set at least:
+
+   | Variable | Description |
+   |----------|-------------|
+   | `PINECONE_API_KEY` | Pinecone API key |
+   | `PINECONE_HOST` | Index host URL (data plane, not the control API) |
+
+   For MySQL inside Docker, keep `DB_HOST=mysql` and the DB variables aligned with `docker-compose.yml` (or your overrides). Optional: `PINECONE_NAMESPACE`, `PINECONE_INDEX`, `PINECONE_EMBEDDING_DRIVER`, `PINECONE_EMBEDDING_DETERMINISTIC_DIMENSIONS`, `OPENAI_API_KEY` so **`Pinecone::embed()`** matches your index **dimension**.
+
    ```bash
-   docker compose exec app php artisan queue:work nats
+   docker compose exec app php artisan config:clear
    ```
-   Keep this terminal open. Or run the worker in the background:
+
+5. **Open the app**
+
+   - **Vectora Studio:** [http://localhost:8000/vectora/studio](http://localhost:8000/vectora/studio)
+   - **Welcome:** [http://localhost:8000/](http://localhost:8000/)
+
+6. **CLI smoke tests inside the container**
+
    ```bash
-   docker compose run -d --name package_test_worker app php artisan queue:work nats --sleep=3
+   docker compose exec app php artisan vectora:test-pinecone
+   docker compose exec app php artisan pinecone:sync
    ```
 
-5. **Open the app:** [http://localhost:2331](http://localhost:2331) (redirects to Dashboard). **Mailhog (emails):** [http://localhost:8025](http://localhost:8025).
+If Vite assets are not built in the image, the studio still loads via CDN + `public/js/vectora-studio.js`. To build front-end assets on the host (Node 20+): `npm install && npm run build`.
 
-6. **Optional:** Run `docker compose exec app php artisan nats:subscribe` in another terminal to log broadcasts and enable Ping (request/reply) on the Broadcast page.
+## Run without Docker (optional)
 
-**Notes:** The app container uses `NATS_HOST=nats`, `MAIL_HOST=mailhog`, and `APP_URL=http://localhost:2331` from `docker-compose.yml`. The entrypoint runs `php artisan config:clear` on startup so Laravel uses the container’s environment (avoids “Connection to localhost:4222 refused” when `.env` had different values).
+If you prefer a local PHP install: `composer install`, copy `.env`, `php artisan key:generate`, configure SQLite or MySQL yourself, `php artisan migrate`, then `php artisan serve`. You must still set Pinecone variables and match embedding dimension to your index.
 
-### Running without Docker
+## Smoke test (CLI)
 
-1. Start NATS (e.g. `docker compose up -d nats`) and set `NATS_HOST=localhost` in `.env`. Configure DB and mail (e.g. `MAIL_MAILER=log` or smtp to Mailhog on `127.0.0.1:1025`).
-2. `composer install` and `php artisan migrate`.
-3. `php artisan serve` then open [http://localhost:8000](http://localhost:8000).
-4. In another terminal: `php artisan queue:work nats`.
+With Docker:
 
-### Event-Driven Order PoC (portfolio-ready)
+```bash
+docker compose exec app php artisan vectora:test-pinecone
+docker compose exec app php artisan vectora:test-pinecone --cleanup   # remove seed vectors after
+docker compose exec app php artisan pinecone:sync                     # index stats (package command)
+```
 
-A **full-feature PoC** demonstrates publish/subscribe, wildcard subscriptions (`orders.*`), request/reply (`payments.validate`), Laravel Queue over NATS, multiple connections (default + analytics), JetStream, and event chaining. See **[ARCHITECTURE.md](ARCHITECTURE.md)** for the message flow diagram and code snippets.
+Without Docker, run the same `php artisan …` commands locally.
 
-**Run the PoC:**
+## Tests
 
-1. Start stack and migrate: `docker compose up -d` then `docker compose exec app php artisan migrate --force`.
-2. Optional – create JetStream stream for order events: `docker compose exec app php artisan nats:setup-orders-stream`.
-3. In **three separate terminals** (or background processes), run:
-   - `docker compose exec app php artisan nats:payment-responder` (RPC responder)
-   - `docker compose exec app php artisan nats:orders-subscriber` (wildcard `orders.*` logger)
-   - `docker compose exec app php artisan queue:work nats` (NATS queue worker)
-4. Open **[Orders (PoC)](http://localhost:2331/orders/create)** and create an order. Flow: `orders.created` → `payments.validate` (reply) → job dispatched → job publishes `orders.shipped` and `metrics.orders` (analytics).
+With Docker:
 
-### App features (NATS Dashboard at /nats)
+```bash
+docker compose exec app composer test
+docker compose exec app composer run test:vectora-studio-api   # API routes, no live Pinecone required
+docker compose exec app composer run test:poc                  # live Pinecone when `.env` is configured
+```
 
-| Feature | Description |
-|--------|-------------|
-| **Publish** | Publish a message to any NATS subject (JSON payload). |
-| **Request/Reply** | Send a request and wait for a reply (requires a responder). |
-| **Queue: dispatch** | Dispatch `ProcessOrderJob` to the NATS queue. |
-| **Queue: delayed** | Schedule `SendReminderJob` with a delay (JetStream). |
-| **Queue: failing** | Dispatch a job that fails (DLQ + `failed_jobs` demo). |
-| **JetStream Streams** | List JetStream streams. |
-| **Failed Jobs** | List failed queue jobs from the database. |
+## Documentation
 
-- **Dead Letter Queue:** `NATS_QUEUE_DLQ=failed` in queue config.
-- **Delayed jobs:** JetStream; `NATS_QUEUE_DELAYED_ENABLED=true`.
-- **Tests:** Run `composer test` for Unit, Feature, and UI (acceptance) tests.
-- **Usage:** See [usage.md](usage.md) for setup, NATS dashboard usage, queue worker, and troubleshooting.
-
-### Vectora / Pinecone
-
-The app also includes **[vectora/laravel-pinecone](https://github.com/zaeem2396/vectora)** for Pinecone (upsert, query, stats). See **[VECTORA_USAGE.md](VECTORA_USAGE.md)** for environment variables, `php artisan vectora:test-pinecone`, and PHPUnit groups `pinecone-poc` / `pinecone` (live API when `.env` is configured).
-
----
-
-## About Laravel
-
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
-
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Doc | Contents |
+|-----|----------|
+| [VECTORA_USAGE.md](VECTORA_USAGE.md) | Install, env, Studio, smoke command, package links |
+| [VECTORA_STUDIO_TESTING.md](VECTORA_STUDIO_TESTING.md) | Endpoints, sample payloads, `curl` notes |
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT (see `composer.json`).
