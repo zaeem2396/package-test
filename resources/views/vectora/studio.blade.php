@@ -1,5 +1,7 @@
 @php
     $useVite = file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot'));
+    $vectoraStudioJsPath = public_path('js/vectora-studio.js');
+    $vectoraStudioJsVersion = is_file($vectoraStudioJsPath) ? filemtime($vectoraStudioJsPath) : 0;
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
@@ -229,7 +231,7 @@
 
     @unless ($useVite)
         <script defer src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
-        <script defer src="{{ asset('js/vectora-studio.js') }}?v={{ filemtime(public_path('js/vectora-studio.js')) }}"></script>
+        <script defer src="{{ asset('js/vectora-studio.js') }}?v={{ $vectoraStudioJsVersion }}"></script>
     @endunless
 </body>
 </html>
