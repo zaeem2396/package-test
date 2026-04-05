@@ -79,6 +79,10 @@ A **full-feature PoC** demonstrates publish/subscribe, wildcard subscriptions (`
 - **Tests:** Run `composer test` for Unit, Feature, and UI (acceptance) tests.
 - **Usage:** See [usage.md](usage.md) for setup, NATS dashboard usage, queue worker, and troubleshooting.
 
+### Vectora / Pinecone
+
+The app also includes **[vectora/laravel-pinecone](https://github.com/zaeem2396/vectora)** for Pinecone (upsert, query, stats). See **[VECTORA_USAGE.md](VECTORA_USAGE.md)** for environment variables, `php artisan vectora:test-pinecone`, and PHPUnit groups `pinecone-poc` / `pinecone` (live API when `.env` is configured).
+
 ---
 
 ## About Laravel
