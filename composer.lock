@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c514d8f7b9fc5970bdd94287905ef584",
+    "content-hash": "8b82503b996a7a60f9d79a0936304404",
     "packages": [
         {
             "name": "brick/math",
@@ -5852,6 +5852,93 @@
             "time": "2025-12-02T11:56:42+00:00"
         },
         {
+            "name": "vectora/laravel-pinecone",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zaeem2396/vectora.git",
+                "reference": "4d39f85c2c911ffc4853fd6b171859d00f4790de"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zaeem2396/vectora/zipball/4d39f85c2c911ffc4853fd6b171859d00f4790de",
+                "reference": "4d39f85c2c911ffc4853fd6b171859d00f4790de",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "guzzlehttp/guzzle": "^7.8",
+                "illuminate/cache": "^11.0|^12.0",
+                "illuminate/console": "^11.0|^12.0",
+                "illuminate/contracts": "^11.0|^12.0",
+                "illuminate/database": "^11.0|^12.0",
+                "illuminate/queue": "^11.0|^12.0",
+                "illuminate/support": "^11.0|^12.0",
+                "php": "^8.2",
+                "psr/http-client": "^1.0",
+                "psr/http-factory": "^1.0",
+                "psr/http-message": "^1.1|^2.0",
+                "psr/log": "^3.0"
+            },
+            "require-dev": {
+                "larastan/larastan": "^3.0",
+                "laravel/pint": "^1.29",
+                "orchestra/testbench": "^9.0|^10.0",
+                "phpstan/phpstan": "^2.0",
+                "phpunit/phpunit": "^11.0"
+            },
+            "default-branch": true,
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Vectora\\Pinecone\\Laravel\\PineconeServiceProvider"
+                    ],
+                    "aliases": {
+                        "Pinecone": "Vectora\\Pinecone\\Laravel\\Facades\\Pinecone"
+                    }
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Vectora\\Pinecone\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Vectora\\Pinecone\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "analyse": [
+                    "phpstan analyse --memory-limit=512M"
+                ],
+                "format": [
+                    "pint"
+                ],
+                "format:test": [
+                    "pint --test"
+                ],
+                "test": [
+                    "phpunit"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Vectora Contributors"
+                }
+            ],
+            "description": "Community PHP/Laravel SDK for Pinecone REST APIs: embeddings, vector ops, Eloquent sync, and queue jobs.",
+            "support": {
+                "source": "https://github.com/zaeem2396/vectora/tree/main",
+                "issues": "https://github.com/zaeem2396/vectora/issues"
+            },
+            "time": "2026-04-03T18:50:54+00:00"
+        },
+        {
             "name": "vlucas/phpdotenv",
             "version": "v5.6.3",
             "source": {
@@ -8387,13 +8474,15 @@
         }
     ],
     "aliases": [],
-    "minimum-stability": "stable",
-    "stability-flags": [],
+    "minimum-stability": "dev",
+    "stability-flags": {
+        "vectora/laravel-pinecone": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.2"
     },
-    "platform-dev": [],
-    "plugin-api-version": "2.6.0"
+    "platform-dev": {},
+    "plugin-api-version": "2.9.0"
 }
