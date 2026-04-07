@@ -2,13 +2,20 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "laravel/laravel",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Laravel PoC: Vectora + Pinecone RAG knowledge base (posts, ingestion, web UI).",
+    "keywords": ["laravel", "vectora", "pinecone", "rag", "embeddings"],
     "license": "MIT",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/zaeem2396/vectora"
+        }
+    ],
     "require": {
         "php": "^8.2",
         "laravel/framework": "^12.0",
-        "laravel/tinker": "^2.10.1"
+        "laravel/tinker": "^2.10.1",
+        "vectora/laravel-pinecone": "dev-main"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -48,6 +55,10 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "test:pinecone": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --group=pinecone"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
@@ -81,6 +92,6 @@
             "php-http/discovery": true
         }
     },
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "prefer-stable": true
 }

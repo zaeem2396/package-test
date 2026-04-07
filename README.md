@@ -1,133 +1,268 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Vectora RAG knowledge base (Laravel PoC)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sample Laravel app that wires **[vectora/laravel-pinecone](https://github.com/zaeem2396/vectora)** into a small **AI knowledge base**:
 
-## NATS Queue App
+- Ingest `Post` records → chunk → embed → **Pinecone**
+- **RAG** Q&amp;A and **semantic search** over those chunks
+- **Web UI** at `/` plus JSON APIs for demos
+- Fluent **`Knowledge`** facade (timings + optional sources)
 
-This project is a **full NATS integration** demo using the [zaeem2396/laravel-nats](https://github.com/zaeem2396/laravel-nats) package from Packagist. It showcases publish, request/reply, NATS queue driver, delayed jobs (JetStream), Dead Letter Queue, and JetStream streams.
-
-### How to run (Docker — recommended)
-
-1. **Prerequisites:** Docker and Docker Compose; laravel-nats package at `../laravel-nats` (sibling of this repo). The Docker build and runtime mount this path so the package resolves.
-
-2. **Start services:**
-   ```bash
-   cd package-test
-   docker compose up -d
-   ```
-
-3. **Run migrations** (first time or after pulling new migrations):
-   ```bash
-   docker compose exec app php artisan migrate --force
-   ```
-
-4. **Start the NATS queue worker** (required for tasks and delayed emails):
-   ```bash
-   docker compose exec app php artisan queue:work nats
-   ```
-   Keep this terminal open. Or run the worker in the background:
-   ```bash
-   docker compose run -d --name package_test_worker app php artisan queue:work nats --sleep=3
-   ```
-
-5. **Open the app:** [http://localhost:2331](http://localhost:2331) (redirects to Dashboard). **Mailhog (emails):** [http://localhost:8025](http://localhost:8025).
-
-6. **Optional:** Run `docker compose exec app php artisan nats:subscribe` in another terminal to log broadcasts and enable Ping (request/reply) on the Broadcast page.
-
-**Notes:** The app container uses `NATS_HOST=nats`, `MAIL_HOST=mailhog`, and `APP_URL=http://localhost:2331` from `docker-compose.yml`. The entrypoint runs `php artisan config:clear` on startup so Laravel uses the container’s environment (avoids “Connection to localhost:4222 refused” when `.env` had different values).
-
-### Running without Docker
-
-1. Start NATS (e.g. `docker compose up -d nats`) and set `NATS_HOST=localhost` in `.env`. Configure DB and mail (e.g. `MAIL_MAILER=log` or smtp to Mailhog on `127.0.0.1:1025`).
-2. `composer install` and `php artisan migrate`.
-3. `php artisan serve` then open [http://localhost:8000](http://localhost:8000).
-4. In another terminal: `php artisan queue:work nats`.
-
-### Event-Driven Order PoC (portfolio-ready)
-
-A **full-feature PoC** demonstrates publish/subscribe, wildcard subscriptions (`orders.*`), request/reply (`payments.validate`), Laravel Queue over NATS, multiple connections (default + analytics), JetStream, and event chaining. See **[ARCHITECTURE.md](ARCHITECTURE.md)** for the message flow diagram and code snippets.
-
-**Run the PoC:**
-
-1. Start stack and migrate: `docker compose up -d` then `docker compose exec app php artisan migrate --force`.
-2. Optional – create JetStream stream for order events: `docker compose exec app php artisan nats:setup-orders-stream`.
-3. In **three separate terminals** (or background processes), run:
-   - `docker compose exec app php artisan nats:payment-responder` (RPC responder)
-   - `docker compose exec app php artisan nats:orders-subscriber` (wildcard `orders.*` logger)
-   - `docker compose exec app php artisan queue:work nats` (NATS queue worker)
-4. Open **[Orders (PoC)](http://localhost:2331/orders/create)** and create an order. Flow: `orders.created` → `payments.validate` (reply) → job dispatched → job publishes `orders.shipped` and `metrics.orders` (analytics).
-
-### App features (NATS Dashboard at /nats)
-
-| Feature | Description |
-|--------|-------------|
-| **Publish** | Publish a message to any NATS subject (JSON payload). |
-| **Request/Reply** | Send a request and wait for a reply (requires a responder). |
-| **Queue: dispatch** | Dispatch `ProcessOrderJob` to the NATS queue. |
-| **Queue: delayed** | Schedule `SendReminderJob` with a delay (JetStream). |
-| **Queue: failing** | Dispatch a job that fails (DLQ + `failed_jobs` demo). |
-| **JetStream Streams** | List JetStream streams. |
-| **Failed Jobs** | List failed queue jobs from the database. |
-
-- **Dead Letter Queue:** `NATS_QUEUE_DLQ=failed` in queue config.
-- **Delayed jobs:** JetStream; `NATS_QUEUE_DELAYED_ENABLED=true`.
-- **Tests:** Run `composer test` for Unit, Feature, and UI (acceptance) tests.
-- **Usage:** See [usage.md](usage.md) for setup, NATS dashboard usage, queue worker, and troubleshooting.
+Configuration: `config/pinecone.php` (Vectora) and `config/knowledge.php` (chunking / RAG defaults).
 
 ---
 
-## About Laravel
+## Getting the code
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+After cloning, **switch to the branch that contains this PoC** (until it is merged into `main`):
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+```bash
+git clone git@github.com:zaeem2396/package-test.git
+cd package-test
+git checkout feat/pinecone-laravel
+```
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+If you already cloned on `main`, `git fetch origin && git checkout feat/pinecone-laravel` does the same.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## What you need before you start
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+| Requirement | Notes |
+|-------------|--------|
+| **PHP** | 8.2+ (Dockerfile uses 8.4) |
+| **Composer** | Install PHP dependencies |
+| **Node.js** (optional) | Only if you run `npm run build` / `npm run dev` for Vite assets |
+| **Pinecone** | Account, an index, **API key**, and index **host** (data plane URL) |
+| **OpenAI** (recommended) | API key for chat answers; for embeddings too if your index dimension matches the model (often **1536** for `text-embedding-3-small`) |
+| **Database** | **MySQL** for `posts`, sessions, and queues (matches `docker-compose.yml`; SQLite is optional) |
 
-## Laravel Sponsors
+**Important:** Vector dimension from your **embedding driver** must equal your **Pinecone index dimension**. If the index is **1024-D**, use `PINECONE_EMBEDDING_DRIVER=deterministic` and `PINECONE_EMBEDDING_DETERMINISTIC_DIMENSIONS=1024` until you create a **1536-D** index for OpenAI embeddings.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## Setup path A — Docker Compose (recommended)
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+From the project root:
 
-## Contributing
+### 1. Environment file
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+cp .env.example .env
+```
 
-## Code of Conduct
+Edit `.env` inside the repo (host bind-mounts it into the container). **Minimum for a working demo:**
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- `PINECONE_API_KEY`
+- `PINECONE_HOST` (from Pinecone console for your index)
+- `OPENAI_API_KEY` (if `VECTORA_LLM_DRIVER=openai`)
+- Match **embedding driver + dimensions** to your index (see `.env.example` comments)
 
-## Security Vulnerabilities
+The Compose file injects **`DB_HOST=mysql`** (service name) and DB credentials into the `app` container, so they override `DB_HOST` / `DB_*` from `.env` while you run under Docker. The bundled **MySQL 8** service uses database `laravel`, user `laravel`, password `secret` (see `docker-compose.yml`).
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 2. Start stack and install
+
+```bash
+docker compose up -d --build
+docker compose exec app composer install
+docker compose exec app php artisan key:generate --force
+```
+
+### 3. Database and sample data
+
+```bash
+docker compose exec app php artisan migrate --force
+docker compose exec app php artisan db:seed --force
+```
+
+### 4. Index posts in Pinecone
+
+```bash
+docker compose exec app php artisan vector:ingest
+```
+
+Use `php artisan vector:ingest --id=1` to test one post. For queued ingestion:
+
+```bash
+docker compose exec app php artisan vector:ingest --queue
+```
+
+Ensure the `queue-worker` service is running (included in `docker-compose.yml`).
+
+### 5. Open the app
+
+The `app` container runs `php artisan serve` on port **8000**.
+
+- **UI:** [http://localhost:8000](http://localhost:8000)
+- **phpMyAdmin** (if you use the bundled service): [http://localhost:8080](http://localhost:8080)
+
+---
+
+## Setup path B — Local PHP (no Docker), MySQL
+
+### 1. Install and env
+
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+```
+
+In `.env`, set **MySQL** (same idea as Docker, but host is your machine):
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=laravel
+DB_PASSWORD=your_password
+```
+
+Create the database and user in MySQL (example):
+
+```sql
+CREATE DATABASE laravel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'laravel'@'%' IDENTIFIED BY 'your_password';
+GRANT ALL ON laravel.* TO 'laravel'@'%';
+FLUSH PRIVILEGES;
+```
+
+`SESSION_DRIVER=database` and `QUEUE_CONNECTION=database` need the **sessions**, **cache**, and **jobs** tables — run migrations (below).
+
+**Optional — SQLite instead of MySQL:** set `DB_CONNECTION=sqlite`, comment out other `DB_*` lines, run `touch database/database.sqlite`, then migrate. Not the default for this repo.
+
+### 2. Migrate, seed, ingest
+
+```bash
+php artisan migrate
+php artisan db:seed
+php artisan vector:ingest
+```
+
+### 3. Run the server
+
+```bash
+php artisan serve
+```
+
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
+
+---
+
+## Environment variables (cheat sheet)
+
+Copy from `.env.example` and adjust. Commonly used:
+
+| Variable | Purpose |
+|----------|---------|
+| `APP_KEY` | `php artisan key:generate` |
+| `DB_CONNECTION`, `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | **MySQL** for `posts`, sessions, cache, jobs (`DB_HOST=mysql` in Docker only) |
+| `PINECONE_API_KEY` | Pinecone API key |
+| `PINECONE_HOST` | Index data-plane URL |
+| `PINECONE_INDEX` | Logical connection name (default `default`) |
+| `PINECONE_NAMESPACE` | Optional namespace |
+| `PINECONE_EMBEDDING_DRIVER` | `openai` or `deterministic` (must match index **dimension**) |
+| `PINECONE_EMBEDDING_DETERMINISTIC_DIMENSIONS` | e.g. `1024` when using deterministic + 1024-D index |
+| `OPENAI_API_KEY` | Embeddings and/or chat |
+| `OPENAI_EMBEDDING_MODEL` | Default `text-embedding-3-small` (typically 1536-D) |
+| `VECTORA_LLM_DRIVER` | `openai` for real answers, `stub` for offline stub text |
+| `OPENAI_CHAT_MODEL` | e.g. `gpt-4o-mini` |
+| `QUEUE_CONNECTION` | `database` or `redis` if you use `vector:ingest --queue` |
+
+---
+
+## Using the web UI
+
+After ingestion:
+
+1. Open `/` — forms for **RAG answer** and **semantic search**.
+2. JSON endpoints (POST, `Accept: application/json`, CSRF cookie from the same origin):
+   - `/knowledge/ask` — body: `question`, `top_k`, `with_sources`
+   - `/knowledge/search` — body: `query`, `top_k`
+
+Controller: `App\Http\Controllers\KnowledgeDemoController`.  
+The PoC UI is **not authenticated**; do not expose it publicly without adding auth or network controls.
+
+---
+
+## Artisan commands
+
+| Command | Description |
+|---------|-------------|
+| `php artisan vector:ingest` | Chunk, embed, upsert all `Post` rows to Pinecone |
+| `php artisan vector:ingest --id=N` | Single post |
+| `php artisan vector:ingest --queue` | Dispatch `IngestPostJob` per post |
+
+---
+
+## Code API (quick examples)
+
+**RAG (structured payload):**
+
+```php
+use App\Models\Post;
+
+$payload = Knowledge::ask('What is the refund policy?')
+    ->from(Post::class)
+    ->topK(5)
+    ->withSources()
+    ->answer();
+
+return response()->json($payload);
+```
+
+**Semantic search (chunk hits):**
+
+```php
+Post::semanticSearch('refund policy', topK: 8);
+Post::semanticSearchModels('refund policy', topK: 8);
+```
+
+---
+
+## Tests
+
+```bash
+php artisan test
+```
+
+Live Pinecone round-trip (skipped unless `PINECONE_API_KEY` and `PINECONE_HOST` are set):
+
+```bash
+composer run test:pinecone
+```
+
+---
+
+## Troubleshooting
+
+| Symptom | Likely cause | What to do |
+|--------|----------------|------------|
+| `PINECONE_API_KEY is not set` | Missing env | Set key in `.env`, clear config cache |
+| `Vector dimension … does not match … index` | Embedding size ≠ index | Align driver/model with index dimension, or recreate index |
+| Empty RAG / no search hits | Nothing ingested | Run `vector:ingest`; check namespace |
+| OpenAI errors | Bad/missing key | Set `OPENAI_API_KEY`; check `VECTORA_LLM_DRIVER` |
+| Queued ingest never runs | No worker | Run `queue:work` or Docker `queue-worker` service |
+| `SQLSTATE[HY000]` / connection refused | Wrong `DB_HOST` / MySQL down | Local: `DB_HOST=127.0.0.1` and running MySQL. Docker: rely on Compose `DB_HOST=mysql` |
+
+More scenarios (validation, queue-only, Tinker snippets): see **[USAGE.md](USAGE.md)**.
+
+---
+
+## Project layout (RAG-related)
+
+| Path | Role |
+|------|------|
+| `app/Services/KnowledgeIngestionService.php` | Ingestion + Vectora `Vector::ingest()` |
+| `app/Services/KnowledgeRetrievalService.php` | Embeddings + `VectorStoreContract::query` |
+| `app/Services/KnowledgeRagService.php` | RAG pipeline + logging |
+| `app/Http/Controllers/KnowledgeDemoController.php` | Web + JSON demo |
+| `app/Console/Commands/VectorIngestCommand.php` | `vector:ingest` |
+| `config/knowledge.php` | Chunk size, top K, system prompt |
+| `config/pinecone.php` | Pinecone / Vectora (merged with package) |
+
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT (see `composer.json`).

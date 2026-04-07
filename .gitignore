@@ -13,6 +13,8 @@
 /.zed
 /auth.json
 /node_modules
+# stray SQLite file sometimes created at repo root — use database/database.sqlite
+/laravel
 /public/build
 /public/hot
 /public/storage
