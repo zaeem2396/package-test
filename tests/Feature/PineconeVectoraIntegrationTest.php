@@ -53,12 +53,20 @@ class PineconeVectoraIntegrationTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $upsert->upsertedCount);
 
         $filter = ['test' => ['$eq' => 'phpunit']];
-        $result = $store->query(new QueryVectorsRequest(
-            vector: $vectors[0]->values,
-            topK: 10,
-            filter: $filter,
-        ));
-        $this->assertNotEmpty($result->matches);
+        $result = null;
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $result = $store->query(new QueryVectorsRequest(
+                vector: $vectors[0]->values,
+                topK: 10,
+                filter: $filter,
+            ));
+            if ($result->matches !== []) {
+                break;
+            }
+            usleep(400_000);
+        }
+        $this->assertNotNull($result);
+        $this->assertNotEmpty($result->matches, 'Pinecone filtered query returned no matches after upsert (retries exhausted).');
         $selfMatch = null;
         foreach ($result->matches as $m) {
             if ($m->id === $ids[0]) {
