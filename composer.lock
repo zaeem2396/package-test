@@ -3296,6 +3296,57 @@
             "time": "2025-12-14T04:43:48+00:00"
         },
         {
+            "name": "smalot/pdfparser",
+            "version": "v2.12.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/smalot/pdfparser.git",
+                "reference": "028d7cc0ceff323bc001d763caa2bbdf611866c4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/smalot/pdfparser/zipball/028d7cc0ceff323bc001d763caa2bbdf611866c4",
+                "reference": "028d7cc0ceff323bc001d763caa2bbdf611866c4",
+                "shasum": ""
+            },
+            "require": {
+                "ext-iconv": "*",
+                "ext-zlib": "*",
+                "php": ">=7.1",
+                "symfony/polyfill-mbstring": "^1.18"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Smalot\\PdfParser\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-3.0"
+            ],
+            "authors": [
+                {
+                    "name": "Sebastien MALOT",
+                    "email": "sebastien@malot.fr"
+                }
+            ],
+            "description": "Pdf parser library. Can read and extract information from pdf file.",
+            "homepage": "https://www.pdfparser.org",
+            "keywords": [
+                "extract",
+                "parse",
+                "parser",
+                "pdf",
+                "text"
+            ],
+            "support": {
+                "issues": "https://github.com/smalot/pdfparser/issues",
+                "source": "https://github.com/smalot/pdfparser/tree/v2.12.4"
+            },
+            "time": "2026-03-10T15:39:47+00:00"
+        },
+        {
             "name": "symfony/clock",
             "version": "v7.4.0",
             "source": {
@@ -5857,12 +5908,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/zaeem2396/vectora.git",
-                "reference": "4d39f85c2c911ffc4853fd6b171859d00f4790de"
+                "reference": "863d3c27f100ac8f1b513656b5dd63f7b045bf79"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zaeem2396/vectora/zipball/4d39f85c2c911ffc4853fd6b171859d00f4790de",
-                "reference": "4d39f85c2c911ffc4853fd6b171859d00f4790de",
+                "url": "https://api.github.com/repos/zaeem2396/vectora/zipball/863d3c27f100ac8f1b513656b5dd63f7b045bf79",
+                "reference": "863d3c27f100ac8f1b513656b5dd63f7b045bf79",
                 "shasum": ""
             },
             "require": {
@@ -5878,7 +5929,8 @@
                 "psr/http-client": "^1.0",
                 "psr/http-factory": "^1.0",
                 "psr/http-message": "^1.1|^2.0",
-                "psr/log": "^3.0"
+                "psr/log": "^3.0",
+                "smalot/pdfparser": "^2.0"
             },
             "require-dev": {
                 "larastan/larastan": "^3.0",
@@ -5895,7 +5947,8 @@
                         "Vectora\\Pinecone\\Laravel\\PineconeServiceProvider"
                     ],
                     "aliases": {
-                        "Pinecone": "Vectora\\Pinecone\\Laravel\\Facades\\Pinecone"
+                        "Pinecone": "Vectora\\Pinecone\\Laravel\\Facades\\Pinecone",
+                        "Vector": "Vectora\\Pinecone\\Laravel\\Facades\\Vector"
                     }
                 }
             },
@@ -5931,12 +5984,12 @@
                     "name": "Vectora Contributors"
                 }
             ],
-            "description": "Community PHP/Laravel SDK for Pinecone REST APIs: embeddings, vector ops, Eloquent sync, and queue jobs.",
+            "description": "Community PHP/Laravel SDK for Pinecone REST APIs: embeddings, vector ops, Eloquent sync, queue jobs, and optional Phase 12 observability (traces, embedding/LLM events, cost estimates).",
             "support": {
                 "source": "https://github.com/zaeem2396/vectora/tree/main",
                 "issues": "https://github.com/zaeem2396/vectora/issues"
             },
-            "time": "2026-04-03T18:50:54+00:00"
+            "time": "2026-04-07T10:39:56+00:00"
         },
         {
             "name": "vlucas/phpdotenv",

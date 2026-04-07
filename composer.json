@@ -2,8 +2,8 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "laravel/laravel",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Laravel PoC: Vectora + Pinecone RAG knowledge base (posts, ingestion, web UI).",
+    "keywords": ["laravel", "vectora", "pinecone", "rag", "embeddings"],
     "license": "MIT",
     "repositories": [
         {
@@ -58,14 +58,6 @@
         "test:pinecone": [
             "@php artisan config:clear --ansi",
             "@php artisan test --group=pinecone"
-        ],
-        "test:poc": [
-            "@php artisan config:clear --ansi",
-            "@php artisan test --group=pinecone-poc"
-        ],
-        "test:vectora-studio-api": [
-            "@php artisan config:clear --ansi",
-            "@php artisan test --group=vectora-studio-api"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
