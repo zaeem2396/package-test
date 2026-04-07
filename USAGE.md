@@ -1,6 +1,6 @@
 # Usage reference (PoC)
 
-**First-time setup:** follow **[README.md](README.md)** — this file adds **Tinker examples**, **pass/fail scenarios**, and extra detail.
+**First-time setup:** follow **[README.md](README.md)** — clone the repo, then **`git checkout feat/pinecone-laravel`** if the PoC is not on `main` yet. This file adds **Tinker examples**, **pass/fail scenarios**, and extra detail.
 
 This PoC expects **MySQL** by default (see Docker Compose or local MySQL in the README). **SQLite** is optional if you prefer a file database.
 

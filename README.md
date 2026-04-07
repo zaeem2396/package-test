@@ -11,6 +11,20 @@ Configuration: `config/pinecone.php` (Vectora) and `config/knowledge.php` (chunk
 
 ---
 
+## Getting the code
+
+After cloning, **switch to the branch that contains this PoC** (until it is merged into `main`):
+
+```bash
+git clone git@github.com:zaeem2396/package-test.git
+cd package-test
+git checkout feat/pinecone-laravel
+```
+
+If you already cloned on `main`, `git fetch origin && git checkout feat/pinecone-laravel` does the same.
+
+---
+
 ## What you need before you start
 
 | Requirement | Notes |
