@@ -1,133 +1,252 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# TaskBoard - Laravel Demo with Datadog APM
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+TaskBoard is a Laravel 12 demo app that includes projects/tasks CRUD, events, listeners, queued jobs, seeders, and intentionally slow routes so you can test observability tooling (especially Datadog APM).
 
-## NATS Queue App
+## What this project includes
 
-This project is a **full NATS integration** demo using the [zaeem2396/laravel-nats](https://github.com/zaeem2396/laravel-nats) package from Packagist. It showcases publish, request/reply, NATS queue driver, delayed jobs (JetStream), Dead Letter Queue, and JetStream streams.
+- Laravel 12 app with MySQL
+- Queue worker container for background jobs
+- phpMyAdmin for DB inspection
+- Datadog Agent container for APM intake
+- Datadog PHP tracer installed in the app image
 
-### How to run (Docker — recommended)
+## Architecture (Docker)
 
-1. **Prerequisites:** Docker and Docker Compose; laravel-nats package at `../laravel-nats` (sibling of this repo). The Docker build and runtime mount this path so the package resolves.
-
-2. **Start services:**
-   ```bash
-   cd package-test
-   docker compose up -d
-   ```
-
-3. **Run migrations** (first time or after pulling new migrations):
-   ```bash
-   docker compose exec app php artisan migrate --force
-   ```
-
-4. **Start the NATS queue worker** (required for tasks and delayed emails):
-   ```bash
-   docker compose exec app php artisan queue:work nats
-   ```
-   Keep this terminal open. Or run the worker in the background:
-   ```bash
-   docker compose run -d --name package_test_worker app php artisan queue:work nats --sleep=3
-   ```
-
-5. **Open the app:** [http://localhost:2331](http://localhost:2331) (redirects to Dashboard). **Mailhog (emails):** [http://localhost:8025](http://localhost:8025).
-
-6. **Optional:** Run `docker compose exec app php artisan nats:subscribe` in another terminal to log broadcasts and enable Ping (request/reply) on the Broadcast page.
-
-**Notes:** The app container uses `NATS_HOST=nats`, `MAIL_HOST=mailhog`, and `APP_URL=http://localhost:2331` from `docker-compose.yml`. The entrypoint runs `php artisan config:clear` on startup so Laravel uses the container’s environment (avoids “Connection to localhost:4222 refused” when `.env` had different values).
-
-### Running without Docker
-
-1. Start NATS (e.g. `docker compose up -d nats`) and set `NATS_HOST=localhost` in `.env`. Configure DB and mail (e.g. `MAIL_MAILER=log` or smtp to Mailhog on `127.0.0.1:1025`).
-2. `composer install` and `php artisan migrate`.
-3. `php artisan serve` then open [http://localhost:8000](http://localhost:8000).
-4. In another terminal: `php artisan queue:work nats`.
-
-### Event-Driven Order PoC (portfolio-ready)
-
-A **full-feature PoC** demonstrates publish/subscribe, wildcard subscriptions (`orders.*`), request/reply (`payments.validate`), Laravel Queue over NATS, multiple connections (default + analytics), JetStream, and event chaining. See **[ARCHITECTURE.md](ARCHITECTURE.md)** for the message flow diagram and code snippets.
-
-**Run the PoC:**
-
-1. Start stack and migrate: `docker compose up -d` then `docker compose exec app php artisan migrate --force`.
-2. Optional – create JetStream stream for order events: `docker compose exec app php artisan nats:setup-orders-stream`.
-3. In **three separate terminals** (or background processes), run:
-   - `docker compose exec app php artisan nats:payment-responder` (RPC responder)
-   - `docker compose exec app php artisan nats:orders-subscriber` (wildcard `orders.*` logger)
-   - `docker compose exec app php artisan queue:work nats` (NATS queue worker)
-4. Open **[Orders (PoC)](http://localhost:2331/orders/create)** and create an order. Flow: `orders.created` → `payments.validate` (reply) → job dispatched → job publishes `orders.shipped` and `metrics.orders` (analytics).
-
-### App features (NATS Dashboard at /nats)
-
-| Feature | Description |
-|--------|-------------|
-| **Publish** | Publish a message to any NATS subject (JSON payload). |
-| **Request/Reply** | Send a request and wait for a reply (requires a responder). |
-| **Queue: dispatch** | Dispatch `ProcessOrderJob` to the NATS queue. |
-| **Queue: delayed** | Schedule `SendReminderJob` with a delay (JetStream). |
-| **Queue: failing** | Dispatch a job that fails (DLQ + `failed_jobs` demo). |
-| **JetStream Streams** | List JetStream streams. |
-| **Failed Jobs** | List failed queue jobs from the database. |
-
-- **Dead Letter Queue:** `NATS_QUEUE_DLQ=failed` in queue config.
-- **Delayed jobs:** JetStream; `NATS_QUEUE_DELAYED_ENABLED=true`.
-- **Tests:** Run `composer test` for Unit, Feature, and UI (acceptance) tests.
-- **Usage:** See [usage.md](usage.md) for setup, NATS dashboard usage, queue worker, and troubleshooting.
+- `app` - Laravel web app (`http://localhost:8000`)
+- `queue-worker` - `php artisan queue:work database --sleep=3 --tries=3`
+- `mysql` - MySQL 8
+- `phpmyadmin` - `http://localhost:8080`
+- `datadog-agent` - receives traces on port `8126` inside Docker network
 
 ---
 
-## About Laravel
+## Prerequisites
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+1. Docker Engine + Docker Compose plugin installed.
+2. Ports available:
+   - `8000` (Laravel app)
+   - `8080` (phpMyAdmin)
+   - `3306` (MySQL, optional external access)
+   - `8126` only if you expose Datadog APM to host
+3. Datadog account and API key (for APM data ingestion).
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Step-by-step: run the project from scratch
 
-## Learning Laravel
+### 1) Clone and enter the project
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+```bash
+git clone <your-repo-url> package-test
+cd package-test
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 2) Switch to the working branch
 
-## Laravel Sponsors
+```bash
+git checkout feature/laravel-full-stack-datadog
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+If the branch does not exist locally yet:
 
-### Premium Partners
+```bash
+git fetch origin
+git checkout -b feature/laravel-full-stack-datadog origin/feature/laravel-full-stack-datadog
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 3) Create runtime env file
 
-## Contributing
+If `.env` does not exist, create it from `.env.example`:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+cp .env.example .env
+```
 
-## Code of Conduct
+Set at least:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```dotenv
+DD_API_KEY=<YOUR_DATADOG_API_KEY>
+DD_SITE=us5.datadoghq.com
+```
 
-## Security Vulnerabilities
+### 4) Build and start containers
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+docker compose up -d --build
+```
+
+### 5) Run migrations + seeders
+
+```bash
+docker compose exec app php artisan migrate --force
+docker compose exec app php artisan db:seed --force
+```
+
+If you want a clean reset every time:
+
+```bash
+docker compose exec app php artisan migrate:fresh --seed --force
+```
+
+### 6) Open the app
+
+- App: `http://localhost:8000`
+- phpMyAdmin: `http://localhost:8080` (user `laravel`, password `secret`)
+
+### 7) Generate app traffic (important for APM)
+
+APM services only appear after traces are sent. Visit:
+
+- `/dashboard`
+- `/projects`
+- `/tasks`
+- `/reports/analytics`
+- `/reports/export`
+
+Hit them multiple times so traces are generated.
+
+---
+
+## Step-by-step: Datadog APM setup for this project
+
+### 1) Ensure Datadog Agent is running
+
+```bash
+docker compose ps datadog-agent
+```
+
+Expected: container is `Up`.
+
+### 2) Ensure app is configured to send traces to agent
+
+The `app` service should have these variables (already in compose):
+
+- `DD_AGENT_HOST=datadog-agent`
+- `DD_TRACE_AGENT_PORT=8126`
+- `DD_TRACE_AGENT_URL=http://datadog-agent:8126`
+- `DD_SERVICE=package-test`
+- `DD_ENV=local` (or your environment)
+- `DD_VERSION=1.0`
+
+### 3) Ensure agent APM is enabled
+
+The `datadog-agent` service should include:
+
+- `DD_APM_ENABLED=true`
+- `DD_APM_NON_LOCAL_TRAFFIC=true`
+
+### 4) Check Datadog UI in the right place
+
+Use:
+
+- **Datadog -> APM -> Services**
+
+Do not rely on Software Catalog for first trace visibility.
+
+### 5) Filter in APM correctly
+
+Use filters:
+
+- `service:package-test`
+- `env:local` (or your configured env)
+
+### 6) Wait briefly
+
+After traffic generation, wait 1-3 minutes for ingestion/indexing.
+
+---
+
+## Fresh reset workflow (project + DB)
+
+```bash
+docker compose down
+docker compose up -d --build
+docker compose exec app php artisan migrate:fresh --seed --force
+```
+
+Full reset including volumes:
+
+```bash
+docker compose down -v
+docker compose up -d --build
+docker compose exec app php artisan migrate --force
+docker compose exec app php artisan db:seed --force
+```
+
+---
+
+## Common issues and fixes
+
+### 1) Port `8126` already allocated
+
+Cause: another Datadog container is binding host `8126`.
+
+Fix:
+
+```bash
+docker ps --format '{{.Names}}\t{{.Ports}}' | grep 8126
+docker rm -f <conflicting-container-name>
+```
+
+Then restart the intended agent/container.
+
+### 2) Service not visible in Datadog APM
+
+Checklist:
+
+1. Agent is running.
+2. App container is running with Datadog env vars.
+3. You generated HTTP traffic after startup.
+4. You are looking in `APM -> Services`.
+5. Datadog API key/site are valid.
+
+### 3) Queue jobs not processing
+
+```bash
+docker compose logs -f queue-worker
+docker compose ps queue-worker
+```
+
+---
+
+## Helpful commands
+
+```bash
+# Start / stop
+docker compose up -d
+docker compose down
+
+# Rebuild app image
+docker compose up -d --build app queue-worker
+
+# Logs
+docker compose logs -f app
+docker compose logs -f queue-worker
+docker compose logs -f datadog-agent
+
+# Artisan inside app container
+docker compose exec app php artisan about
+docker compose exec app php artisan route:list
+docker compose exec app php artisan migrate:status
+```
+
+---
+
+## Routes in this demo
+
+- `/` - Welcome
+- `/dashboard` - Slow dashboard (~400ms)
+- `/projects` - Projects list
+- `/projects/create` - Create project
+- `/projects/{id}` - Project detail
+- `/tasks` - Tasks list (filter supported)
+- `/tasks/create` - Create task
+- `/tasks/{id}` - Task detail / mark complete
+- `/reports/analytics` - Slow analytics (~1.2s)
+- `/reports/export` - Slow export (~800ms)
+
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT
