@@ -10,6 +10,7 @@ use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use RuntimeException;
 use Illuminate\View\View;
 
 class TaskController extends Controller
@@ -67,5 +68,24 @@ class TaskController extends Controller
         $task->update(['status' => 'completed', 'completed_at' => now()]);
         event(new TaskCompleted($task));
         return redirect()->back()->with('success', 'Task marked complete.');
+    }
+
+    public function demoCreateFailure(Request $request): void
+    {
+        $projectId = (int) $request->input('project_id', 0);
+        $title = trim((string) $request->input('title', ''));
+
+        throw new RuntimeException(
+            "Could not create task '{$title}' for project #{$projectId}: the task orchestration service timed out while reserving an SLA slot. Please retry in a few minutes."
+        );
+    }
+
+    public function demoUpdateFailure(Task $task, Request $request): void
+    {
+        $newStatus = (string) $request->input('status', 'in_progress');
+
+        throw new RuntimeException(
+            "Task #{$task->id} update rejected: status '{$newStatus}' conflicts with the current workflow lock held by automation worker 'sync-project-stats'."
+        );
     }
 }

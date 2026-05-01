@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     build:
@@ -104,8 +102,6 @@ services:
       DD_APM_MAX_TPS: "100"
       DD_APM_ENABLE_RARE_SAMPLER: "true"
       DD_APM_ERROR_TPS: "50"
-    ports:
-      - "8126:8126"
     networks:
       - app-network
 

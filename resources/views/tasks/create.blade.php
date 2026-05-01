@@ -35,4 +35,19 @@
     </div>
     <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Create</button>
 </form>
+
+<div class="max-w-md mt-6 p-4 rounded border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700">
+    <h2 class="font-semibold text-amber-900 dark:text-amber-200">APM demo: trigger create error</h2>
+    <p class="text-sm mt-1 text-amber-800 dark:text-amber-300">
+        Use this button to throw a realistic create-time exception and verify error traces in Datadog.
+    </p>
+    <form action="{{ route('tasks.demo.fail-create') }}" method="POST" class="mt-3 space-y-3">
+        @csrf
+        <input type="hidden" name="project_id" value="{{ old('project_id', $selectedProjectId ?? ($projects->first()->id ?? 1)) }}">
+        <input type="hidden" name="title" value="{{ old('title', 'Quarterly SLA Planning Task') }}">
+        <button type="submit" class="px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700">
+            Trigger create failure
+        </button>
+    </form>
+</div>
 @endsection

@@ -17,6 +17,8 @@ Route::resource('projects', ProjectController::class)->only(['index', 'show', 'c
 Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
 Route::get('/tasks/create', [TaskController::class, 'create'])->name('tasks.create');
 Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
+Route::post('/tasks/demo/fail-create', [TaskController::class, 'demoCreateFailure'])->name('tasks.demo.fail-create');
+Route::put('/tasks/{task}/demo/fail-update', [TaskController::class, 'demoUpdateFailure'])->name('tasks.demo.fail-update');
 Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
 Route::post('/tasks/{task}/complete', [TaskController::class, 'complete'])->name('tasks.complete');
 
